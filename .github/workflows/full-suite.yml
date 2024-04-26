@@ -13,3 +13,6 @@ jobs:
       - name: Build Image
         run: |
           docker build -t oi --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} .
+      - name: Pytest
+        run: |
+          pytest
