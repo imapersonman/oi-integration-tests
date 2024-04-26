@@ -5,6 +5,11 @@ jobs:
   test-suite:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            Dockerfile
+            home
       - name: Build Image
         run: |
           docker build -t oi --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} .
