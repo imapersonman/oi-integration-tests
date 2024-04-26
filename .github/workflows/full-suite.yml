@@ -22,4 +22,4 @@ jobs:
           pip install -r requirements.txt
       - name: Pytest
         run: |
-          pytest utility/tests $([${{ inputs.show-output }} = true] && echo "--output" || echo "")
+          pytest utility/tests --output
