@@ -37,13 +37,17 @@ def pytest_generate_tests(metafunc):
         all_test_paths = list(filter(pred, os.listdir(TEST_DIRECTORY)))
         ids = [os.path.splitext(os.path.basename(path))[0] for path in all_test_paths]
         metafunc.parametrize("test_path", all_test_paths, ids=ids, scope="function")
+    if "show_output" in metafunc.fixturenames:
+        show_output = metafunc.config.getoption("--output")
+        metafunc.parametrize("show_output", [show_output], scope="function")
 
 
-def test_install(docker_client: DockerClient, test_path):
+def test_install(docker_client: DockerClient, test_path, show_output):
     print(f"Running file: {test_path}")
-    print("cool")
+    print(f"show_output: {show_output}")
 
-    response, command, container = run_test_in_docker(docker_client, test_path)
+    args = ["--output"] if show_output else []
+    response, command, container = run_test_in_docker(docker_client, test_path, args)
 
     status = response["StatusCode"]
     try:

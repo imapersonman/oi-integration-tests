@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import subprocess
 from typing import List
-from questionary import select, checkbox, Choice
+from questionary import select, checkbox, confirm, Choice
 import docker
 import rich
 
@@ -19,16 +19,13 @@ TEST_DIRECTORY = Path("../home/tests")
 
 
 def load_tests_from_directory(suite_directory: Path) -> List:
-    suite = []
-    test_names = os.listdir(suite_directory)
-    for name in test_names:
-        suite.append(name)
-    return suite
+    suite = os.listdir(suite_directory)
+    return list(sorted(suite))
 
 
-def run_docker_image(test_name):
+def run_docker_image(test_name, extra_args=[]):
     path = TEST_DIRECTORY / Path(test_name)
-    subprocess.run(["docker", "run", "-t", "oi", "python", path, "--output"])
+    subprocess.run(["docker", "run", "-t", "oi", "python", path, *extra_args])
 
 
 def run_docker_image_interactively():
@@ -63,14 +60,15 @@ while running:
     ).ask()
 
     if action == "build-image":
-        build_docker_image()
+        from_scratch = confirm("From scratch?", default=False).ask()
+        build_docker_image(with_cache=not from_scratch)
     elif action == "run-tests":
         all_or_some = select(
-            "How would you like to run your tests?",
+            "Which tests?",
             default="all",
             choices=[
-                "all",
-                "some"
+                Choice("all of them!", "all"),
+                Choice("only some of them", "some")
             ]
         ).ask()
         if all_or_some == "all":
@@ -89,7 +87,18 @@ while running:
             "Which test would you like to view in real time?",
             choices=suite
         ).ask()
-        run_docker_image(test)
+        user_or_script = select(
+            "How would you like to view the interaction?",
+            default="user",
+            choices=[
+                Choice("as the user would see it", "user"),
+                Choice("as an expect script", "script")
+            ]
+        ).ask()
+        if user_or_script == "user":
+            run_docker_image(test, extra_args=["--output"])
+        elif user_or_script == "script":
+            run_docker_image(test)
     elif action == "interact-manually":
         run_docker_image_interactively()
     elif action == "quit":
