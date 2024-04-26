@@ -3,9 +3,10 @@ on:
   workflow_dispatch:
     inputs:
       show-output:
-        description: 'Whether to include logs as users see them in tracebacks.'
+        description: 'Enable interaction output as users see it.'
         required: false
         default: false
+        type: boolean
 
 jobs:
   test-suite:
