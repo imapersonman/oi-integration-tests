@@ -1,0 +1,10 @@
+name: Run the full Test Suite
+on: workflow_dispatch
+
+jobs:
+  test-suite:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Image
+        run: |
+          docker build -t oi --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} .
