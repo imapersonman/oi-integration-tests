@@ -10,8 +10,10 @@ TEST_DIRECTORY = SCRIPT_DIR.parent.parent / Path("home/tests")
 IMAGE_NAME = "oi"
 
 
-def run(to_include: Optional[List[str]] = None):
+def run(to_include: Optional[List[str]] = None, show_output=False):
     options = [] if to_include is None else [f"--include-case={i}" for i in to_include]
+    if show_output:
+        options = [*options, "--output"]
     pytest.main(options)
 
 

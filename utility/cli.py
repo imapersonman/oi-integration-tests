@@ -80,7 +80,18 @@ while running:
                 choices=suite
             ).ask()
             print(to_run)
-            run_tests(to_include=to_run)
+            user_or_script = select(
+                "What kind of logs do you want to see?",
+                default="script",
+                choices=[
+                    Choice("as an expect script", "script"),
+                    Choice("as the user would see it", "user")
+                ]
+            ).ask()
+            if user_or_script == "user":
+                run_tests(to_include=to_run, show_output=True)
+            elif user_or_script == "script":
+                run_tests(to_include=to_run, show_output=False)
     elif action == "view-interaction":
         suite = load_tests_from_directory(TEST_DIRECTORY)
         test = select(
