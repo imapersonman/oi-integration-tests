@@ -9,7 +9,10 @@ jobs:
       - name: Build Image
         run: |
           docker build -t oi --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} .
+      - name: Installing Pip Dependencies
+        run: |
+          cd utility
+          pip install -r requirements.txt
       - name: Pytest
         run: |
-          pip install pytest
           pytest utility/tests
