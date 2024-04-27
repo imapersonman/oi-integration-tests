@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Image
         run: |
-          docker build -t oi --build-arg OPENAI_API_KEY=something .
+          docker build -t oi --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} .
       - name: Installing Pip Dependencies
         run: |
           cd utility
