@@ -79,7 +79,6 @@ while running:
                 "Which tests would you like to run?",
                 choices=suite
             ).ask()
-            print(to_run)
             user_or_script = select(
                 "What kind of logs do you want to see?",
                 default="script",
