@@ -15,11 +15,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build Image
         run: |
-          docker build -t oi --build-arg OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }} .
+          docker build -t oi --build-arg OPENAI_API_KEY=something .
       - name: Installing Pip Dependencies
         run: |
           cd utility
           pip install -r requirements.txt
       - name: Pytest
         run: |
-          pytest utility/tests --output
+          pytest utility/tests $(["${{ inputs.show-output }}" = "true"] && echo "--output" || echo "")
