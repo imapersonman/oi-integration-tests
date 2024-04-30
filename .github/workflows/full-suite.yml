@@ -24,4 +24,5 @@ jobs:
         # run: |
         #   pytest utility/tests $([ "${{ inputs.show-output }}" = "true" ] && echo "--output" || echo "")
         run: |
+          cd ${{ github.workspace }}/basic
           python run_tests.py $([ "${{ inputs.show-output }}" = "true" ] && echo "--output" || echo "")
