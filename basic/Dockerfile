@@ -10,5 +10,5 @@ COPY home /home
 ENV PYTHONPATH="/home/helpers:$PYTHONPATH"
 
 ENV OPENAI_API_KEY=${OPENAI_API_KEY}
-WORKDIR /home
+# WORKDIR /home
 CMD /bin/bash

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import subprocess
 from typing import List, Optional
 import pytest
 from docker import DockerClient, from_env as from_docker_env
@@ -10,11 +11,15 @@ TEST_DIRECTORY = SCRIPT_DIR.parent.parent / Path("home/tests")
 IMAGE_NAME = "oi"
 
 
-def run(to_include: Optional[List[str]] = None, show_output=False):
+def run(base: Path, to_include: Optional[List[str]] = None, show_output=False):
     options = [] if to_include is None else [f"--include-case={i}" for i in to_include]
+    options = [*options, "--base-dir", base.resolve()]
     if show_output:
         options = [*options, "--output"]
-    pytest.main(options)
+    # pytest.main(options)
+    print(SCRIPT_DIR)
+    os.chdir(SCRIPT_DIR)
+    subprocess.run(["pytest", *options])
 
 
 @pytest.fixture(scope="session")
@@ -35,8 +40,9 @@ def should_run_as_test(included: List):
 def pytest_generate_tests(metafunc):
     if "test_path" in metafunc.fixturenames:
         to_include = metafunc.config.getoption("--include-case")
+        base_dir = metafunc.config.getoption("--base-dir")
         pred = should_run_as_test(to_include)
-        all_test_paths = list(filter(pred, os.listdir(TEST_DIRECTORY)))
+        all_test_paths = list(filter(pred, os.listdir(base_dir)))
         ids = [os.path.splitext(os.path.basename(path))[0] for path in all_test_paths]
         metafunc.parametrize("test_path", all_test_paths, ids=ids, scope="function")
     if "show_output" in metafunc.fixturenames:

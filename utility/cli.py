@@ -8,6 +8,7 @@ import rich
 
 
 from tests.test_suite import run as run_tests
+from run_tests import run_tests
 
 
 """
@@ -15,7 +16,15 @@ This file currently has to be run from the utility directory for everything to w
 """
 
 
-TEST_DIRECTORY = Path("../home/tests")
+BASE = Path("../basic")
+
+
+def test_dir(base: Path) -> Path:
+    return base / Path("home/tests")
+
+
+def docker_dir(base: Path) -> Path:
+    return base
 
 
 def load_tests_from_directory(suite_directory: Path) -> List:
@@ -24,7 +33,7 @@ def load_tests_from_directory(suite_directory: Path) -> List:
 
 
 def run_docker_image(test_name, extra_args=[]):
-    path = TEST_DIRECTORY / Path(test_name)
+    path = test_dir(BASE) / Path(test_name)
     subprocess.run(["docker", "run", "-t", "oi", "python", path, *extra_args])
 
 
@@ -41,7 +50,7 @@ def build_docker_image(with_cache=True):
         rich.print("[yellow]Warning: OPENAI_API_KEY not found in env -- building without it[/yellow]")
     if not with_cache:
         command.extend(["--no-cache"])
-    subprocess.run([*command, ".."])
+    subprocess.run([*command, docker_dir(BASE)])
 
 
 running = True
@@ -72,9 +81,9 @@ while running:
             ]
         ).ask()
         if all_or_some == "all":
-            run_tests()
+            run_tests(BASE)
         else:
-            suite = load_tests_from_directory(TEST_DIRECTORY)
+            suite = load_tests_from_directory(test_dir(BASE))
             to_run = checkbox(
                 "Which tests would you like to run?",
                 choices=suite
@@ -88,11 +97,11 @@ while running:
                 ]
             ).ask()
             if user_or_script == "user":
-                run_tests(to_include=to_run, show_output=True)
+                run_tests(BASE, to_include=to_run, show_output=True)
             elif user_or_script == "script":
-                run_tests(to_include=to_run, show_output=False)
+                run_tests(BASE, to_include=to_run, show_output=False)
     elif action == "view-interaction":
-        suite = load_tests_from_directory(TEST_DIRECTORY)
+        suite = load_tests_from_directory(test_dir(BASE))
         test = select(
             "Which test would you like to view in real time?",
             choices=suite
