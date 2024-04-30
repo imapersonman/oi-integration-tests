@@ -21,5 +21,7 @@ jobs:
           cd utility
           pip install -r requirements.txt
       - name: Pytest
+        # run: |
+        #   pytest utility/tests $([ "${{ inputs.show-output }}" = "true" ] && echo "--output" || echo "")
         run: |
-          pytest utility/tests $([ "${{ inputs.show-output }}" = "true" ] && echo "--output" || echo "")
+          python run_tests.py $([ "${{ inputs.show-output }}" = "true" ] && echo "--output" || echo "")

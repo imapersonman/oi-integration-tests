@@ -1,13 +1,13 @@
 import os
 from pathlib import Path
 import subprocess
-from typing import List
+from typing import List, Optional
 from questionary import select, checkbox, confirm, Choice
 import docker
 import rich
 
 
-from tests.test_suite import run as run_tests
+# from tests.test_suite import run as run_tests
 from run_tests import run_tests
 
 
@@ -16,11 +16,13 @@ This file currently has to be run from the utility directory for everything to w
 """
 
 
-BASE = Path("../basic")
+# BASE = Path("../basic")
+BASE = Path(os.getcwd())
+print("CWD = " + str(BASE))
 
 
-def test_dir(base: Path) -> Path:
-    return base / Path("home/tests")
+def test_dir(base: Optional[Path] = None) -> Path:
+    return (base or Path("")) / Path("home/tests")
 
 
 def docker_dir(base: Path) -> Path:
@@ -33,7 +35,7 @@ def load_tests_from_directory(suite_directory: Path) -> List:
 
 
 def run_docker_image(test_name, extra_args=[]):
-    path = test_dir(BASE) / Path(test_name)
+    path = test_dir() / test_name
     subprocess.run(["docker", "run", "-t", "oi", "python", path, *extra_args])
 
 
@@ -70,7 +72,8 @@ while running:
 
     if action == "build-image":
         from_scratch = confirm("From scratch?", default=False).ask()
-        build_docker_image(with_cache=not from_scratch)
+        if from_scratch is not None:
+            build_docker_image(with_cache=not from_scratch)
     elif action == "run-tests":
         all_or_some = select(
             "Which tests?",
@@ -82,7 +85,7 @@ while running:
         ).ask()
         if all_or_some == "all":
             run_tests(BASE)
-        else:
+        elif all_or_some is not None:
             suite = load_tests_from_directory(test_dir(BASE))
             to_run = checkbox(
                 "Which tests would you like to run?",
