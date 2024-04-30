@@ -8,7 +8,7 @@ It's a smoke test.
 
 child = start()
 
-child.expect(["apples", "#"])
+child.expect("#apples")
 child.sendline("interpreter")
 child.expect(">")
 child.sendline("calculate 100 - 42 using python.  don't explain just code.")
