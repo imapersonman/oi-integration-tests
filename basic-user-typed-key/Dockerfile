@@ -1,0 +1,13 @@
+FROM python:3.11.8
+
+ARG OPENAI_API_KEY
+
+RUN pip install git+https://github.com/imapersonman/open-interpreter.git@main
+RUN pip install pexpect
+RUN pip install pytest
+
+COPY home /home
+ENV PYTHONPATH="/home/helpers:$PYTHONPATH"
+
+ENV OPENAI_INDIRECT_API_KEY=${OPENAI_API_KEY}
+CMD /bin/bash
