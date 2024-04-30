@@ -21,9 +21,9 @@ jobs:
         run: |
           cd ${{ github.workspace }}/utility
           pip install -r requirements.txt
-      - name: Pytest
+      - name: Actually run tests
         # run: |
         #   pytest utility/tests $([ "${{ inputs.show-output }}" = "true" ] && echo "--output" || echo "")
         run: |
           cd ${{ github.workspace }}/basic
-          python run_tests.py $([ "${{ inputs.show-output }}" = "true" ] && echo "--output" || echo "")
+          python ../utility/run_tests.py $([ "${{ inputs.show-output }}" = "true" ] && echo "--output" || echo "")
