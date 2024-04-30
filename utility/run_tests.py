@@ -134,4 +134,5 @@ def color(esc_seq: str, text: str) -> str:
 
 
 if __name__ == "__main__":
-    run_tests(Path("../basic"))
+    if not run_tests(Path("../basic")):
+        exit(1)
