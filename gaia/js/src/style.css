@@ -1,0 +1,79 @@
+body {
+  margin: 0;
+}
+
+/* From ChatGPT */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner {
+  border: 16px solid #f3f3f3; /* Light grey background */
+  border-top: 16px solid #aaa; /* Blue color for the spinner */
+  border-radius: 50%;
+  width: 1em;
+  height: 1em;
+  position: fixed;
+  right: 0.5em;
+  top: 0.5em;
+  animation: spin 2s linear infinite; /* Animation: name, duration, easing, repetition */
+}
+
+/* shamelessly taking style from w3schools. */
+table {
+  border-collapse: collapse;
+  max-width: 100%;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd70;
+  padding: 0.4em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+tr:hover {
+  background-color: #aaa;
+  cursor: pointer;
+}
+
+pre:not(.collapsed) {
+  white-space: pre-wrap;
+}
+
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-height: 100vh;
+  max-width: 100vw;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+pre {
+  margin: 0;
+}
+
+.no-scroll-for-modal {
+  overflow: hidden;
+}
+
+/* pre.collapsed {
+  white-space: nowrap;
+} */
+
+/* pre.expanded {
+  white-space: pre-wrap;
+} */
+
+/* pre {
+  white-space: pre-wrap;
+} */
