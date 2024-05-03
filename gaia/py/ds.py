@@ -17,7 +17,7 @@ def pull_out(ds: Dataset, columns: List[str]) -> List[Dict]:
 
 
 def all_of_the_validation_tests() -> Dataset:
-    return load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation", trust_remote_code=True)
+    return load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
 
 
 def run_gaia_task(entry, command: str) -> bool:
