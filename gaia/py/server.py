@@ -30,7 +30,7 @@ def run_single():
     entry_command = request.json["command"]
     for entry in validation:
         if entry["task_id"] == task_id:
-            correct = ds.run_gaia_task(entry, entry_command)
+            correct = ds.run_gaia_task_from_command_line(entry, entry_command)
             if correct:
                 return "correct"
             else:

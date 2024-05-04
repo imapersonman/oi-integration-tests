@@ -42,9 +42,22 @@ type Options = {
     run_single: (task_id: string) => Promise<'correct' | 'incorrect' | 'error'>
 }
 
+const stored_string = (key: string, default_value: string): rwReactive<string> => {
+    const r = reactive(localStorage.getItem(key) ?? default_value)
+    r.watch((value) => localStorage.setItem(key, value))
+    return r
+}
+
+const stored_number = (key: string, default_value: number): rwReactive<number> => {
+    const stored = localStorage.getItem(key)
+    const r = reactive(stored === null ? default_value : parseInt(stored))
+    r.watch((value) => localStorage.setItem(key, `${value}`))
+    return r
+}
+
 const container = (): Displayable<{}> => {
-    const hostname = reactive(DEFAULT_HOSTNAME)
-    const port = reactive(DEFAULT_PORT)
+    const hostname = stored_string('hostname', DEFAULT_HOSTNAME)
+    const port = stored_string('port', DEFAULT_PORT)
 
     const full = combined({ hostname, port }).derive(({ hostname, port }) => `http://${hostname}:${port}`)
     const qb = reactive<QuestionPreview[] | undefined>(undefined)
@@ -77,8 +90,6 @@ const container = (): Displayable<{}> => {
             header.style.padding = '0.5em'
             header.style.width = 'fit-content'
             header.style.backgroundColor = 'white'
-            // header.style.position = 'sticky'
-            // header.style.top = '0'
 
             const e = vl(
                 html(header),
@@ -102,7 +113,7 @@ const container = (): Displayable<{}> => {
 }
 
 const command_builder = <Opt>(): [rReactive<string>, Displayable<Opt>] => {
-    const options = reactive(DEFAULT_OPTIONS)
+    const options = stored_string('options', DEFAULT_OPTIONS)
     const command = options.derive((opts) => `interpreter ${opts}`)
     const display: Displayable<Opt> = vl(
         displ((opts) => el('pre', { style: 'margin: 0;' }, sl(label('interpreter'), reactive_text_field(options)).get_display(opts))),

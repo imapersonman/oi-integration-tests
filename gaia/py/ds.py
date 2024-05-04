@@ -20,7 +20,7 @@ def all_of_the_validation_tests() -> Dataset:
     return load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
 
 
-def run_gaia_task(entry, command: str) -> bool:
+def run_gaia_task_from_command_line(entry, command: str) -> bool:
     # to a run a task, we need to
     # 1) grab the path where the needed file is located if it exists.
     path_to_file = entry["file_path"]
@@ -33,11 +33,15 @@ def run_gaia_task(entry, command: str) -> bool:
     child.logfile_read = OutputWrapper(sys.stdout)
     child.expect(">")
     child.sendline(entry["Question"].replace("\n", " "))
-    child.expect(">", timeout=None)
+    # if the llm decides to output "> ", everything will stop.  this isn't great so let's not do that.
+    child.expect("> ", timeout=None)
     child.close()
+
+    print()
+    print("Finished!  I don't know if it's correct yet, though.")
 
     return "correct"
 
 
 if __name__ == "__main__":
-    run_gaia_task({"file_path": "something.txt"}, "interpreter")
+    run_gaia_task_from_command_line({"file_path": "something.txt"}, "interpreter")
