@@ -59,6 +59,7 @@ def run_gaia_task_from_library(entry, command: Dict) -> bool:
     print("api_key:", interpreter.llm.api_key)
     print("auto_run:", interpreter.auto_run)
     print("system_prompt:", interpreter.custom_instructions)
+    print("Question:", entry["Question"])
     print()
 
     try:
@@ -71,6 +72,8 @@ def run_gaia_task_from_library(entry, command: Dict) -> bool:
             return False
         final_answer = final_answer_re.group(1).strip()
         print("LLM's FINAL ANSWER:", final_answer)
+
+        return final_answer == entry["Final answer"]
     except KeyboardInterrupt:
         ...
     finally:
