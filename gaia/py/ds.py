@@ -1,3 +1,4 @@
+import pprint
 import re
 import sys
 from typing import Dict, List
@@ -48,21 +49,14 @@ def run_gaia_task_from_command_line(entry, command: str) -> bool:
 # Returns None if we weren't able to find an answer (according to a very simple regex parse and a lowercase conversion),
 # otherwise returns the answer as a string.
 def run_gaia_task_from_library(entry, command: Dict) -> str | None:
-    print("command configuration:", command)
+    print("command configuration:")
+    pprint.pprint(command)
     interpreter = OpenInterpreter(import_computer_api=True)
     interpreter.llm.model = command["model"] if command["model"] != "" else interpreter.llm.model
     interpreter.llm.api_base = command["api_base"] if command["api_base"] != "" else interpreter.llm.api_base
     interpreter.llm.api_key = command["api_key"] if command["api_key"] != "" else interpreter.llm.api_key
     interpreter.auto_run = command["auto_run"]
     interpreter.custom_instructions = command["system_prompt"]
-
-    print()
-    print("api_base:", interpreter.llm.api_base)
-    print("api_key:", interpreter.llm.api_key)
-    print("auto_run:", interpreter.auto_run)
-    print("system_prompt:", interpreter.custom_instructions)
-    print("Question:", entry["Question"])
-    print()
 
     try:
         # We're assuming:
