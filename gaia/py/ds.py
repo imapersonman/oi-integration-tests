@@ -49,6 +49,8 @@ def run_gaia_task_from_command_line(entry, command: str) -> bool:
 # Returns None if we weren't able to find an answer (according to a very simple regex parse and a lowercase conversion),
 # otherwise returns the answer as a string.
 def run_gaia_task_from_library(entry, command: Dict) -> str | None:
+    print("entry:")
+    pprint.pprint(entry)
     print("command configuration:")
     pprint.pprint(command)
     interpreter = OpenInterpreter(import_computer_api=True)
