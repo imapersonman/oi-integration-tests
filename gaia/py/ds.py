@@ -1,7 +1,7 @@
 import sys
 from typing import Dict, List
 from datasets import Dataset, load_dataset
-from interpreter import interpreter
+from interpreter import interpreter, OpenInterpreter
 import pexpect
 
 from helpers import OutputWrapper
@@ -46,6 +46,11 @@ def run_gaia_task_from_command_line(entry, command: str) -> bool:
 
 def run_gaia_task_from_library(entry, command: Dict) -> bool:
     print("command configuration:", command)
+    interpreter.llm.api_base = command["api_base"] if command["api_base"] != "" else interpreter.llm.api_base
+    interpreter.llm.api_key = command["api_key"] if command["api_key"] != "" else interpreter.llm.api_key
+    interpreter.auto_run = command["auto_run"]
+    for _ in interpreter.chat(entry["Question"], display=True)
+        ...
     return False
 
 
