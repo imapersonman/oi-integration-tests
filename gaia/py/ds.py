@@ -58,6 +58,7 @@ def run_gaia_task_from_library(entry, command: Dict) -> str | None:
     interpreter.llm.api_base = command["api_base"] if command["api_base"] != "" else interpreter.llm.api_base
     interpreter.llm.api_key = command["api_key"] if command["api_key"] != "" else interpreter.llm.api_key
     interpreter.auto_run = command["auto_run"]
+    interpreter.os = command["os_mode"]
     interpreter.custom_instructions = command["system_prompt"]
 
     try:

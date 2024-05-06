@@ -26,6 +26,7 @@ interface ConnectionConfiguration {
 
 interface CommandConfiguration {
     auto_run: boolean
+    os_mode: boolean
     model: string     // empty means default model.
     api_base: string  // empty means default base.
     api_key: string   // empty means default key.
@@ -160,6 +161,7 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
     const command = options.derive((opts) => `interpreter ${opts}`)
 
     const auto_run = stored_boolean('auto_run', false)
+    const os_mode = stored_boolean('os_mode', false)
     const model = stored_string('model', '')
     const api_base = stored_string('api_base', '')
     const api_key = stored_string('api_key', '')
@@ -167,6 +169,7 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
 
     const display = vl(
         sl(label('auto_run:'), checkbox(auto_run)),
+        sl(label('os_mode:'), checkbox(os_mode)),
         sl(label('model:'), reactive_text_field(model)),
         sl(label('api_base:'), reactive_text_field(api_base)),
         sl(label('api_key:'), reactive_text_field(api_key)),
@@ -178,7 +181,7 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
     //     sl(label('command:'), displ((opts) => el('pre', {}, reactive_label(command).get_display(opts)))),
     // )
 
-    const command_config = combined({ auto_run, model, api_base, api_key, system_prompt })
+    const command_config = combined({ auto_run, os_mode, model, api_base, api_key, system_prompt })
     return [command_config, display]
 }
 
