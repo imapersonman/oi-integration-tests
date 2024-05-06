@@ -51,10 +51,14 @@ def run_gaia_task_from_library(entry, command: Dict) -> bool:
     interpreter.llm.api_base = command["api_base"] if command["api_base"] != "" else interpreter.llm.api_base
     interpreter.llm.api_key = command["api_key"] if command["api_key"] != "" else interpreter.llm.api_key
     interpreter.auto_run = command["auto_run"]
+    interpreter.custom_instructions = command["system_prompt"]
 
+    print()
     print("api_base:", interpreter.llm.api_base)
     print("api_key:", interpreter.llm.api_key)
     print("auto_run:", interpreter.auto_run)
+    print("system_prompt:", interpreter.custom_instructions)
+    print()
 
     try:
         for _ in interpreter.chat(entry["Question"], display=True):
@@ -63,6 +67,7 @@ def run_gaia_task_from_library(entry, command: Dict) -> bool:
         ...
     finally:
         interpreter.computer.terminate()
+
     return False
 
 

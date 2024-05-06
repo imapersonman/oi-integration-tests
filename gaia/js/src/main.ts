@@ -7,6 +7,12 @@ import { z } from 'zod'
 const DEFAULT_HOSTNAME = '127.0.0.1'
 const DEFAULT_PORT = '7000'
 const DEFAULT_OPTIONS = ''
+const DEFAULT_SYSTEM_PROMPT = `
+You are a general AI assistant. I will ask you a question. Report your thoughts, and finish your answer with the following template: FINAL ANSWER: [YOUR FINAL ANSWER]. YOUR FINAL ANSWER should be a number OR as few words as possible OR a comma separated list of numbers and/or strings.
+If you are asked for a number, don’t use comma to write your number neither use units such as $ or percent sign unless specified otherwise.
+If you are asked for a string, don’t use articles, neither abbreviations (e.g. for cities), and write the digits in plain text unless specified otherwise.
+If you are asked for a comma separated list, apply the above rules depending of whether the element to be put in the list is a number or a string.
+`
 
 interface Configuration {
     connection: ConnectionConfiguration
@@ -145,6 +151,7 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
     const model = stored_string('model', '')
     const api_base = stored_string('api_base', '')
     const api_key = stored_string('api_key', '')
+    const system_prompt = stored_string('system_prompt', DEFAULT_SYSTEM_PROMPT)
 
     const display = vl(
         sl(label('auto_run:'), checkbox(auto_run)),
