@@ -55,8 +55,16 @@ const FullQuestion = z.object({
 type FullQuestion = z.infer<typeof FullQuestion>
 
 type Options = {
-    get_single: (task_id: string) => Promise<FullQuestion>
-    run_single: (task_id: string) => Promise<'correct' | 'incorrect' | 'error'>
+    get_single: (task_id: string, abort_controller?: AbortController) => Promise<FullQuestion>
+    run_single: (task_id: string, abort_controller?: AbortController) => Promise<'correct' | 'incorrect' | 'error'>
+}
+
+const stored_boolean = (key: string, default_value: boolean): rwReactive<boolean> => {
+    const stored = localStorage.getItem(key) === 'true' ? true : false
+    console.log('stored boolean???', stored)
+    const r = reactive(stored ?? default_value)
+    r.watch((value) => { console.log('stored', stored); localStorage.setItem(key, `${value}`) })
+    return r
 }
 
 const stored_string = (key: string, default_value: string): rwReactive<string> => {
@@ -82,8 +90,8 @@ const container = (): Displayable<{}> => {
     const [command, command_display] = command_builder()
 
     const child_options: Options = {
-        get_single: (task_id) => get_single_question(full.get(), task_id),
-        run_single: (task_id) => run_single_task(full.get(), command.get(), task_id)
+        get_single: (task_id, c) => get_single_question(full.get(), task_id, c),
+        run_single: (task_id, c) => run_single_task(full.get(), command.get(), task_id, c)
     }
 
     return {
@@ -133,10 +141,10 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
     const options = stored_string('options', DEFAULT_OPTIONS)
     const command = options.derive((opts) => `interpreter ${opts}`)
 
-    const auto_run = reactive(false)
-    const model = reactive('')
-    const api_base = reactive('')
-    const api_key = reactive('')
+    const auto_run = stored_boolean('auto_run', false)
+    const model = stored_string('model', '')
+    const api_base = stored_string('api_base', '')
+    const api_key = stored_string('api_key', '')
 
     const display = vl(
         sl(label('auto_run:'), checkbox(auto_run)),
@@ -154,8 +162,9 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
     return [command_config, display]
 }
 
-const get_single_question = (base: string, task_id: string): Promise<any> => {
-    return fetch(`${base}/gaia/${task_id}`)
+const get_single_question = (base: string, task_id: string, abort_controller?: AbortController): Promise<any> => {
+    const signal_opt = abort_controller === undefined ? {} : { signal: abort_controller.signal }
+    return fetch(`${base}/gaia/${task_id}`, signal_opt)
         .then((response) => {
             if (response.ok)
                 return response.json()
@@ -279,10 +288,23 @@ const checkbox = <Opt>(rv: rwReactive<boolean>): Displayable<Opt> => {
     return {
         get_display: () => {
             const e = el('input', { type: 'checkbox' }) as HTMLInputElement
+            // How is this not causing an infinite loop??
+            // ...something something event loop...?
             rv.watch((value) => e.checked = value)()
+            e.addEventListener('change', () => rv.set(e.checked))
             return e
         }
     }
+}
+
+const hideable = <Opt>(display: Displayable<Opt>, is_hidden: rReactive<boolean>): Displayable<Opt> => {
+    return displ((opt) => {
+        const e = display.get_display(opt)
+        const og_display = e.style.display
+        console.log('og_display', og_display)
+        is_hidden.watch((is_hidden) => e.style.display = is_hidden ? 'none' : og_display)()
+        return e
+    })
 }
 
 const button = (label: string, callback: (event: MouseEvent) => void): HTMLInputElement => {
@@ -299,11 +321,13 @@ const TaskResult = z.union([
 
 type TaskResult = z.infer<typeof TaskResult>
 
-const run_single_task = (base: string, command: CommandConfiguration, task_id: string): Promise<'correct' | 'incorrect' | 'error'> => {
+const run_single_task = (base: string, command: CommandConfiguration, task_id: string, c?: AbortController): Promise<'correct' | 'incorrect' | 'error'> => {
+    const signal_opt = c === undefined ? {} : { signal: c.signal }
     const options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task_id, command })
+        body: JSON.stringify({ task_id, command }),
+        ...signal_opt
     }
     return fetch(`${base}/gaia/run`, options)
         .then((response) => {
@@ -330,17 +354,23 @@ const annotator_metadata = <Opt>(am: AnnotatorMetadata): Displayable<Opt> => {
 }
 
 const full_question = (qp: FullQuestion): Displayable<Options> => {
+    const is_running = reactive(false)
+    const is_not_running = is_running.derive((r) => !r)
     return displ((opts) => {
+        const controller = new AbortController()
+        const cancel_button = button('cancel', () => { console.log('cancelling!!'); controller.abort() })
         const run = button('run', () => {
             run.value = 'running...'
             run.disabled = true
-            opts.run_single(qp.task_id)
+            is_running.set(true)
+            opts.run_single(qp.task_id, controller)
                 .then((result) => {
                     console.log('result', result)
                 })
                 .finally(() => {
                     run.value = 'run'
                     run.disabled = false
+                    is_running.set(false)
                 })
         })
         return vl(
@@ -354,6 +384,7 @@ const full_question = (qp: FullQuestion): Displayable<Options> => {
                 sl(html(el('div', { style: 'width: 2em;' }, '\xa0')), annotator_metadata(qp['Annotator Metadata'])),
             ),
             html(run),
+            hideable(html(cancel_button), is_not_running)
             // sl(html(button('', goto_prev)), html(button('', goto_next)))
         ).get_display(opts)
     })
