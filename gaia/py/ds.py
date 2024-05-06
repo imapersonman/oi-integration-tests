@@ -45,7 +45,9 @@ def run_gaia_task_from_command_line(entry, command: str) -> bool:
     return True
 
 
-def run_gaia_task_from_library(entry, command: Dict) -> bool:
+# Returns None if we weren't able to find an answer (according to a very simple regex parse and a lowercase conversion),
+# otherwise returns the answer as a string.
+def run_gaia_task_from_library(entry, command: Dict) -> str | None:
     print("command configuration:", command)
     interpreter = OpenInterpreter(import_computer_api=True)
     interpreter.llm.model = command["model"] if command["model"] != "" else interpreter.llm.model
@@ -69,17 +71,16 @@ def run_gaia_task_from_library(entry, command: Dict) -> bool:
         final_message = output[-1]["content"]
         final_answer_re = re.search("FINAL ANSWER: (.+)", final_message)
         if final_answer_re is None:
-            return False
-        final_answer = final_answer_re.group(1).strip()
-        print("LLM's FINAL ANSWER:", final_answer)
+            return None
+        final_answer = final_answer_re.group(1).strip().lower()
 
-        return final_answer == entry["Final answer"]
+        return final_answer
     except KeyboardInterrupt:
         ...
     finally:
         interpreter.computer.terminate()
 
-    return False
+    return None
 
 
 if __name__ == "__main__":

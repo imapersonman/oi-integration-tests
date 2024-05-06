@@ -61,9 +61,19 @@ const FullQuestion = z.object({
 
 type FullQuestion = z.infer<typeof FullQuestion>
 
+const TaskResult = z.union([
+    z.object({ status: z.literal('correct'), actual: z.string() }),
+    z.object({ status: z.literal('incorrect'), expected: z.string(), actual: z.string() }),
+    z.object({ status: z.literal('error') })
+])
+
+type TaskResult = z.infer<typeof TaskResult>
+
+
+
 type Options = {
     get_single: (task_id: string, abort_controller?: AbortController) => Promise<FullQuestion>
-    run_single: (task_id: string, abort_controller?: AbortController) => Promise<'correct' | 'incorrect' | 'error'>
+    run_single: (task_id: string, abort_controller?: AbortController) => Promise<TaskResult>
 }
 
 const stored_boolean = (key: string, default_value: boolean): rwReactive<boolean> => {
@@ -322,15 +332,7 @@ const button = (label: string, callback: (event: MouseEvent) => void): HTMLInput
     return b as HTMLInputElement
 }
 
-const TaskResult = z.union([
-    z.literal('correct'),
-    z.literal('incorrect'),
-    z.literal('error')
-])
-
-type TaskResult = z.infer<typeof TaskResult>
-
-const run_single_task = (base: string, command: CommandConfiguration, task_id: string, c?: AbortController): Promise<'correct' | 'incorrect' | 'error'> => {
+const run_single_task = (base: string, command: CommandConfiguration, task_id: string, c?: AbortController): Promise<TaskResult> => {
     const signal_opt = c === undefined ? {} : { signal: c.signal }
     const options = {
         method: 'POST',
@@ -341,11 +343,14 @@ const run_single_task = (base: string, command: CommandConfiguration, task_id: s
     return fetch(`${base}/gaia/run`, options)
         .then((response) => {
             if (response.ok)
-                return response.text()
+                return response.json()
             else
                 throw new Error('Error running single task.')
         })
         .then(TaskResult.parse)
+        .catch(() => {
+            return { status: 'error' }
+        })
 }
 
 const annotator_metadata = <Opt>(am: AnnotatorMetadata): Displayable<Opt> => {

@@ -30,9 +30,13 @@ def run_single():
     entry_command = request.json["command"]
     for entry in validation:
         if entry["task_id"] == task_id:
-            correct = ds.run_gaia_task_from_library(entry, entry_command)
-            if correct:
-                return "correct"
+            final_answer = ds.run_gaia_task_from_library(entry, entry_command)
+            if final_answer is None:
+                return jsonify({ "status": "error" })
             else:
-                return "incorrect"
-    return "error"
+                expected = entry["Final answer"].lower()
+                if expected == final_answer:
+                    return jsonify({ "status": "correct", "actual": final_answer })
+                else:
+                    return jsonify({ "status": "incorrect", "expected": expected, "actual": final_answer })
+    return jsonify({ "status": "error" })
