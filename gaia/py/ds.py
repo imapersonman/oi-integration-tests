@@ -1,3 +1,4 @@
+import re
 import sys
 from typing import Dict, List
 from datasets import Dataset, load_dataset
@@ -61,8 +62,15 @@ def run_gaia_task_from_library(entry, command: Dict) -> bool:
     print()
 
     try:
-        for _ in interpreter.chat(entry["Question"], display=True):
-            ...
+        # We're assuming:
+        # 1) the "FINAL ANSWER: " text is the last thing that appears in the last message of the LLM's response.
+        output = interpreter.chat(entry["Question"], display=True, stream=False)
+        final_message = output[-1]["content"]
+        final_answer_re = re.search("FINAL ANSWER: (.+)", final_message)
+        if final_answer_re is None:
+            return False
+        final_answer = final_answer_re.group(1).strip()
+        print("LLM's FINAL ANSWER:", final_answer)
     except KeyboardInterrupt:
         ...
     finally:

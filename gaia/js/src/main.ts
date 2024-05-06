@@ -1,6 +1,6 @@
 import { el } from './el'
 import './style.css'
-import { Displayable, displ, html, label, reactive_label, reactive_text_field, sl, vl } from './displayable'
+import { Displayable, displ, html, label, reactive_label, reactive_ml_text_field, reactive_text_field, sl, vl } from './displayable'
 import { combined, rReactive, reactive, reactive_list, rwReactive, rwpReactiveList } from './reactive'
 import { z } from 'zod'
 
@@ -29,6 +29,7 @@ interface CommandConfiguration {
     model: string     // empty means default model.
     api_base: string  // empty means default base.
     api_key: string   // empty means default key.
+    system_prompt: string
 }
 
 const QuestionPreview = z.object({
@@ -157,7 +158,8 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
         sl(label('auto_run:'), checkbox(auto_run)),
         sl(label('model:'), reactive_text_field(model)),
         sl(label('api_base:'), reactive_text_field(api_base)),
-        sl(label('api_key:'), reactive_text_field(api_key))
+        sl(label('api_key:'), reactive_text_field(api_key)),
+        vl(label('system_prompt:'), reactive_ml_text_field(system_prompt))
     )
 
     // const display: Displayable<Opt> = vl(
@@ -165,7 +167,7 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
     //     sl(label('command:'), displ((opts) => el('pre', {}, reactive_label(command).get_display(opts)))),
     // )
 
-    const command_config = combined({ auto_run, model, api_base, api_key })
+    const command_config = combined({ auto_run, model, api_base, api_key, system_prompt })
     return [command_config, display]
 }
 

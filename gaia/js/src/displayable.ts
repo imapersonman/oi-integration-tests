@@ -233,6 +233,19 @@ export const reactive_text_field = <T>(id: rwReactive<string>): Displayable<T> =
   }
 })
 
+export const reactive_ml_text_field = <T>(id: rwReactive<string>): Displayable<T> => ({
+  get_display: () => {
+    const e = el('textarea', { type: 'text' }) as HTMLInputElement
+    id.watch((id) => {
+      e.value = id
+    })()
+    e.addEventListener('keyup', () => {
+      id.set(e.value)
+    })
+    return e
+  }
+})
+
 export const id_decl = <T>(name: rwReactive<string>): Displayable<T> => ({
   get_display: () => {
     const min_size = 2
