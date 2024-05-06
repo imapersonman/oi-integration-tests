@@ -8,6 +8,23 @@ const DEFAULT_HOSTNAME = '127.0.0.1'
 const DEFAULT_PORT = '7000'
 const DEFAULT_OPTIONS = ''
 
+interface Configuration {
+    connection: ConnectionConfiguration
+    command: CommandConfiguration
+}
+
+interface ConnectionConfiguration {
+    host: string
+    post: string
+}
+
+interface CommandConfiguration {
+    auto_run: boolean
+    model: string     // empty means default model.
+    api_base: string  // empty means default base.
+    api_key: string   // empty means default key.
+}
+
 const QuestionPreview = z.object({
     task_id: z.string(),
     Level: z.string().transform((ns) => parseInt(ns)),
@@ -112,14 +129,29 @@ const container = (): Displayable<{}> => {
     }
 }
 
-const command_builder = <Opt>(): [rReactive<string>, Displayable<Opt>] => {
+const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<Opt>] => {
     const options = stored_string('options', DEFAULT_OPTIONS)
     const command = options.derive((opts) => `interpreter ${opts}`)
-    const display: Displayable<Opt> = vl(
-        displ((opts) => el('pre', { style: 'margin: 0;' }, sl(label('interpreter'), reactive_text_field(options)).get_display(opts))),
-        sl(label('command:'), displ((opts) => el('pre', {}, reactive_label(command).get_display(opts)))),
+
+    const auto_run = reactive(false)
+    const model = reactive('')
+    const api_base = reactive('')
+    const api_key = reactive('')
+
+    const display = vl(
+        sl(label('auto_run:'), checkbox(auto_run)),
+        sl(label('model:'), reactive_text_field(model)),
+        sl(label('api_base:'), reactive_text_field(api_base)),
+        sl(label('api_key:'), reactive_text_field(api_key))
     )
-    return [command, display]
+
+    // const display: Displayable<Opt> = vl(
+    //     displ((opts) => el('pre', { style: 'margin: 0;' }, sl(label('interpreter'), reactive_text_field(options)).get_display(opts))),
+    //     sl(label('command:'), displ((opts) => el('pre', {}, reactive_label(command).get_display(opts)))),
+    // )
+
+    const command_config = combined({ auto_run, model, api_base, api_key })
+    return [command_config, display]
 }
 
 const get_single_question = (base: string, task_id: string): Promise<any> => {
@@ -267,7 +299,7 @@ const TaskResult = z.union([
 
 type TaskResult = z.infer<typeof TaskResult>
 
-const run_single_task = (base: string, command: string, task_id: string): Promise<'correct' | 'incorrect' | 'error'> => {
+const run_single_task = (base: string, command: CommandConfiguration, task_id: string): Promise<'correct' | 'incorrect' | 'error'> => {
     const options = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

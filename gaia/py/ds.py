@@ -1,6 +1,7 @@
 import sys
 from typing import Dict, List
 from datasets import Dataset, load_dataset
+from interpreter import interpreter
 import pexpect
 
 from helpers import OutputWrapper
@@ -41,6 +42,10 @@ def run_gaia_task_from_command_line(entry, command: str) -> bool:
     print("Finished!  I don't know if it's correct yet, though.")
 
     return "correct"
+
+
+def run_gaia_task_from_library(entry, command: Dict) -> bool:
+    return "something-else???"
 
 
 if __name__ == "__main__":
