@@ -41,11 +41,12 @@ def run_gaia_task_from_command_line(entry, command: str) -> bool:
     print()
     print("Finished!  I don't know if it's correct yet, though.")
 
-    return "correct"
+    return True
 
 
 def run_gaia_task_from_library(entry, command: Dict) -> bool:
-    return "something-else???"
+    print("command configuration:", command)
+    return False
 
 
 if __name__ == "__main__":
