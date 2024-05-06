@@ -32,7 +32,7 @@ def run_single():
         if entry["task_id"] == task_id:
             final_answer = ds.run_gaia_task_from_library(entry, entry_command)
             if final_answer is None:
-                return jsonify({ "status": "error" })
+                return jsonify({ "status": "not-found" })
             else:
                 expected = entry["Final answer"].lower()
                 if expected == final_answer:

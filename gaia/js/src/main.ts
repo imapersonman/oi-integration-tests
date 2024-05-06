@@ -64,6 +64,7 @@ type FullQuestion = z.infer<typeof FullQuestion>
 const TaskResult = z.union([
     z.object({ status: z.literal('correct'), actual: z.string() }),
     z.object({ status: z.literal('incorrect'), expected: z.string(), actual: z.string() }),
+    z.object({ status: z.literal('not-found') }),
     z.object({ status: z.literal('error') })
 ])
 
