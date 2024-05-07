@@ -71,8 +71,6 @@ const TaskResult = z.union([
 
 type TaskResult = z.infer<typeof TaskResult>
 
-
-
 type Options = {
     get_single: (task_id: string, abort_controller?: AbortController) => Promise<FullQuestion>
     run_single: (task_id: string, abort_controller?: AbortController) => Promise<TaskResult>
@@ -80,9 +78,8 @@ type Options = {
 
 const stored_boolean = (key: string, default_value: boolean): rwReactive<boolean> => {
     const stored = localStorage.getItem(key) === 'true' ? true : false
-    console.log('stored boolean???', stored)
     const r = reactive(stored ?? default_value)
-    r.watch((value) => { console.log('stored', stored); localStorage.setItem(key, `${value}`) })
+    r.watch((value) => localStorage.setItem(key, `${value}`))
     return r
 }
 
@@ -97,6 +94,22 @@ const stored_number = (key: string, default_value: number): rwReactive<number> =
     const r = reactive(stored === null ? default_value : parseInt(stored))
     r.watch((value) => localStorage.setItem(key, `${value}`))
     return r
+}
+
+const task_result = <Opt>(tr: rReactive<TaskResult | undefined>): Displayable<Opt> => {
+    return displ((opt) => {
+        const e = el('pre', {})
+        console.log('something else yeah')
+        tr.watch((tr) => {
+            e.innerHTML = ''
+            console.log('task result!')
+            if (tr !== undefined) {
+                console.log('task result!')
+                e.append(JSON.stringify(tr, null, 2))
+            }
+        })
+        return e
+    })
 }
 
 const container = (): Displayable<{}> => {
@@ -324,7 +337,6 @@ const hideable = <Opt>(display: Displayable<Opt>, is_hidden: rReactive<boolean>)
     return displ((opt) => {
         const e = display.get_display(opt)
         const og_display = e.style.display
-        console.log('og_display', og_display)
         is_hidden.watch((is_hidden) => e.style.display = is_hidden ? 'none' : og_display)()
         return e
     })
@@ -374,16 +386,18 @@ const annotator_metadata = <Opt>(am: AnnotatorMetadata): Displayable<Opt> => {
 const full_question = (qp: FullQuestion): Displayable<Options> => {
     const is_running = reactive(false)
     const is_not_running = is_running.derive((r) => !r)
+    const tr = reactive<TaskResult | undefined>(undefined)
+    const without_result = tr.derive((tr) => tr === undefined)
     return displ((opts) => {
         const controller = new AbortController()
-        const cancel_button = button('cancel', () => { console.log('cancelling!!'); controller.abort() })
+        const cancel_button = button('cancel', () => controller.abort())
         const run = button('run', () => {
             run.value = 'running...'
             run.disabled = true
             is_running.set(true)
             opts.run_single(qp.task_id, controller)
                 .then((result) => {
-                    console.log('result', result)
+                    tr.set(result)
                 })
                 .finally(() => {
                     run.value = 'run'
@@ -402,7 +416,8 @@ const full_question = (qp: FullQuestion): Displayable<Options> => {
                 sl(html(el('div', { style: 'width: 2em;' }, '\xa0')), annotator_metadata(qp['Annotator Metadata'])),
             ),
             html(run),
-            hideable(html(cancel_button), is_not_running)
+            hideable(html(cancel_button), is_not_running),
+            hideable(task_result(tr), without_result)
             // sl(html(button('', goto_prev)), html(button('', goto_next)))
         ).get_display(opts)
     })
@@ -498,7 +513,6 @@ const question_browser = (qps: QuestionPreview[]): Displayable<Options> => {
                 header,
                 t.get_display(opts))
 
-            console.log(qps)
             rows.add(...qps)
 
             return e

@@ -3,7 +3,7 @@ import re
 import sys
 from typing import Dict, List
 from datasets import Dataset, load_dataset
-from interpreter import interpreter, OpenInterpreter
+from interpreter import OpenInterpreter
 import pexpect
 
 from helpers import OutputWrapper
@@ -61,10 +61,14 @@ def run_gaia_task_from_library(entry, command: Dict) -> str | None:
     interpreter.os = command["os_mode"]
     interpreter.custom_instructions = command["system_prompt"]
 
+    # Let's see what happens if I just copy-paste the file_path into with the prompt.
+    file_path = f"files/{entry["file_name"]}"
+    prompt = f"file_path:{file_path}\n{entry["Question"]}"
+
     try:
         # We're assuming:
-        # 1) the "FINAL ANSWER: " text is the last thing that appears in the last message of the LLM's response.
-        output = interpreter.chat(entry["Question"], display=True, stream=False)
+        # - the "FINAL ANSWER: " text is the last thing that appears in the last message of the LLM's response.
+        output = interpreter.chat(prompt, display=True, stream=False)
         final_message = output[-1]["content"]
         final_answer_re = re.search("FINAL ANSWER: (.+)", final_message)
         if final_answer_re is None:
