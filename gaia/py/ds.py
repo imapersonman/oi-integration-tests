@@ -62,7 +62,7 @@ def run_gaia_task_from_library(entry, command: Dict) -> str | None:
     interpreter.custom_instructions = command["system_prompt"]
 
     # Let's see what happens if I just copy-paste the file_path into with the prompt.
-    file_path = f"files/{entry["file_name"]}"
+    file_path = f"files/{entry['file_name']}"
     prompt = f"file_path:{file_path}\n{entry["Question"]}"
 
     try:
