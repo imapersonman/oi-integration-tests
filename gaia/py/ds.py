@@ -5,6 +5,7 @@ from typing import Dict, List
 from datasets import Dataset, load_dataset
 from interpreter import OpenInterpreter
 import pexpect
+from models import CommandConfiguration
 
 from helpers import OutputWrapper
 
@@ -48,22 +49,22 @@ def run_gaia_task_from_command_line(entry, command: str) -> bool:
 
 # Returns None if we weren't able to find an answer (according to a very simple regex parse and a lowercase conversion),
 # otherwise returns the answer as a string.
-def run_gaia_task_from_library(entry, command: Dict) -> str | None:
-    print("entry:")
-    pprint.pprint(entry)
-    print("command configuration:")
-    pprint.pprint(command)
+def run_gaia_task_from_library(command: CommandConfiguration, question: str, file_name: str) -> str | None:
+    # print("entry:")
+    # pprint.pprint(entry)
+    # print("command configuration:")
+    # pprint.pprint(command)
     interpreter = OpenInterpreter(import_computer_api=True)
-    interpreter.llm.model = command["model"] if command["model"] != "" else interpreter.llm.model
-    interpreter.llm.api_base = command["api_base"] if command["api_base"] != "" else interpreter.llm.api_base
-    interpreter.llm.api_key = command["api_key"] if command["api_key"] != "" else interpreter.llm.api_key
-    interpreter.auto_run = command["auto_run"]
-    interpreter.os = command["os_mode"]
-    interpreter.custom_instructions = command["system_prompt"]
+    interpreter.llm.model = command.model if command.model != "" else interpreter.llm.model
+    interpreter.llm.api_base = command.api_base if command.api_base != "" else interpreter.llm.api_base
+    interpreter.llm.api_key = command.api_key if command.api_key != "" else interpreter.llm.api_key
+    interpreter.auto_run = command.auto_run
+    interpreter.os = command.os_mode
+    interpreter.custom_instructions = command.system_prompt
 
     # Let's see what happens if I just copy-paste the file_path into with the prompt.
-    file_path = f"files/{entry['file_name']}"
-    prompt = f"file_path:{file_path}\n{entry['Question']}"
+    file_path = f"files/{file_name}"
+    prompt = f"file_path:{file_path}\n{question}"
 
     try:
         # We're assuming:

@@ -24,56 +24,93 @@ interface ConnectionConfiguration {
     post: string
 }
 
-interface CommandConfiguration {
-    auto_run: boolean
-    os_mode: boolean
-    model: string     // empty means default model.
-    api_base: string  // empty means default base.
-    api_key: string   // empty means default key.
-    system_prompt: string
-}
+const CommandConfiguration = z.object({
+    auto_run: z.boolean(),
+    os_mode: z.boolean(),
+    model: z.string(),
+    api_base: z.string(),
+    api_key: z.string(),
+    system_prompt: z.string()
+})
+
+type CommandConfiguration = z.infer<typeof CommandConfiguration>
+
+// interface CommandConfiguration {
+//     auto_run: boolean
+//     os_mode: boolean
+//     model: string     // empty means default model.
+//     api_base: string  // empty means default base.
+//     api_key: string   // empty means default key.
+//     system_prompt: string
+// }
 
 const QuestionPreview = z.object({
     task_id: z.string(),
-    Level: z.string().transform((ns) => parseInt(ns)),
-    Question: z.string()
+    level: z.number(),
+    question: z.string()
 })
 
 type QuestionPreview = z.infer<typeof QuestionPreview>
 
 const AnnotatorMetadata = z.nullable(z.object({
-    Steps: z.string(),
-    'Number of steps': z.string().transform((ns) => parseInt(ns)),
-    'How long did this take?': z.string(),
-    Tools: z.string(),
-    'Number of tools': z.string()
+    steps: z.string(),
+    number_of_steps: z.number(),
+    length_of_time: z.string(),
+    tools: z.string(),
+    number_of_tools: z.string()
 }))
 
 type AnnotatorMetadata = z.infer<typeof AnnotatorMetadata>
 
 const FullQuestion = z.object({
     task_id: z.string(),
-    Question: z.string(),
-    Level: z.string().transform((ns) => parseInt(ns)),
-    'Final answer': z.string(),
+    question: z.string(),
+    level: z.number(),
+    final_answer: z.string(),
     file_name: z.string(),
-    'Annotator Metadata': AnnotatorMetadata
+    annotator_metadata: AnnotatorMetadata
 })
 
 type FullQuestion = z.infer<typeof FullQuestion>
 
+const TaskResultStatus = z.union([z.literal('correct'), z.literal('incorrect'), z.literal('not-found'), z.literal('error')])
+
+type TaskResultStatus = z.infer<typeof TaskResultStatus>
+
 const TaskResult = z.union([
-    z.object({ status: z.literal('correct'), actual: z.string() }),
-    z.object({ status: z.literal('incorrect'), expected: z.string(), actual: z.string() }),
-    z.object({ status: z.literal('not-found') }),
-    z.object({ status: z.literal('error') })
+    z.object({ status: z.literal('correct'), created: z.string(), actual: z.string() }),
+    z.object({ status: z.literal('incorrect'), created: z.string(), expected: z.string(), actual: z.string() }),
+    z.object({ status: z.literal('not-found'), created: z.string() }),
+    z.object({ status: z.literal('error'), created: z.string() })
 ])
 
 type TaskResult = z.infer<typeof TaskResult>
 
+const TaskRunPreview = z.object({
+    id: z.string(),
+    task: QuestionPreview,
+    started: z.string(),
+    result: z.nullable(TaskResultStatus),
+    finished: z.nullable(z.string())
+})
+
+type TaskRunPreview = z.infer<typeof TaskRunPreview>
+
+const TaskRun = z.object({
+    id: z.string(),
+    started: z.string(),
+    task: FullQuestion,
+    command: CommandConfiguration,
+    conversation: z.array(z.record(z.string(), z.string()))
+})
+
+type TaskRun = z.infer<typeof TaskRun>
+
 type Options = {
     get_single: (task_id: string, abort_controller?: AbortController) => Promise<FullQuestion>
     run_single: (task_id: string, abort_controller?: AbortController) => Promise<TaskResult>
+    get_all_runs: (abort_controller?: AbortController) => Promise<TaskRunPreview[]>
+    get_task_runs: (task_id: string, abort_controller?: AbortController) => Promise<TaskRunPreview[]>
 }
 
 const stored_boolean = (key: string, default_value: boolean): rwReactive<boolean> => {
@@ -97,16 +134,12 @@ const stored_number = (key: string, default_value: number): rwReactive<number> =
 }
 
 const task_result = <Opt>(tr: rReactive<TaskResult | undefined>): Displayable<Opt> => {
-    return displ((opt) => {
+    return displ(() => {
         const e = el('pre', {})
-        console.log('something else yeah')
         tr.watch((tr) => {
             e.innerHTML = ''
-            console.log('task result!')
-            if (tr !== undefined) {
-                console.log('task result!')
+            if (tr !== undefined)
                 e.append(JSON.stringify(tr, null, 2))
-            }
         })
         return e
     })
@@ -123,7 +156,43 @@ const container = (): Displayable<{}> => {
 
     const child_options: Options = {
         get_single: (task_id, c) => get_single_question(full.get(), task_id, c),
-        run_single: (task_id, c) => run_single_task(full.get(), command.get(), task_id, c)
+        run_single: (task_id, c) => run_single_task(full.get(), command.get(), task_id, c),
+        get_all_runs: (c) => {
+            const signal_opts = c === undefined ? {} : { signal: c.signal }
+            const options = { method: 'GET', ...signal_opts }
+            return fetch(`${full.get()}/gaia/runs`, options)
+                .then((response) => {
+                    if (response.ok)
+                        return response.json()
+                    else
+                        throw new Error('Error getting all runs!')
+                })
+                .then((data) => {
+                    console.log('all task run previews', data)
+                    return data
+                })
+                .then(z.array(TaskRunPreview).parse)
+        },
+        get_task_runs: (task_id, c) => {
+            const signal_opts = c === undefined ? {} : { signal: c.signal }
+            const options = { method: 'GET', ...signal_opts }
+            return fetch(`${full.get()}/gaia/tasks/${task_id}/runs`, options)
+                .then((response) => {
+                    if (response.ok)
+                        return response.json()
+                    else
+                        throw new Error('Error getting single run!')
+                })
+                .then((data) => {
+                    console.log('some task runs previews:', data)
+                    return data
+                })
+                .then(z.array(TaskRunPreview).parse)
+                .catch((e) => {
+                    console.log(e)
+                    throw e
+                })
+        }
     }
 
     return {
@@ -160,7 +229,11 @@ const container = (): Displayable<{}> => {
                 qb_parent.innerHTML = ''
                 await get_all_questions(full.get())
                     .then((data) => qb_parent.appendChild(question_browser(data).get_display(child_options)))
-                    .catch(() => qb_parent.appendChild(el('div', {}, `There was a problem connecting to ${full.get()}.`)))
+                    .catch((e) => {
+                        qb_parent.appendChild(el('div', {}, `There was a problem connecting to ${full.get()}.`))
+                        qb_parent.append(el('pre', {}, JSON.stringify(e, undefined, 2)))
+                        throw e
+                    })
                     .finally(() => spinner.style.display = 'none')
             })
 
@@ -200,7 +273,7 @@ const command_builder = <Opt>(): [rReactive<CommandConfiguration>, Displayable<O
 
 const get_single_question = (base: string, task_id: string, abort_controller?: AbortController): Promise<any> => {
     const signal_opt = abort_controller === undefined ? {} : { signal: abort_controller.signal }
-    return fetch(`${base}/gaia/${task_id}`, signal_opt)
+    return fetch(`${base}/gaia/tasks/${task_id}`, signal_opt)
         .then((response) => {
             if (response.ok)
                 return response.json()
@@ -211,7 +284,7 @@ const get_single_question = (base: string, task_id: string, abort_controller?: A
 }
 
 const get_all_questions = (base: string): Promise<QuestionPreview[]> => {
-    return fetch(`${base}/gaia`)
+    return fetch(`${base}/gaia/tasks`)
         .then((response) => {
             if (response.ok)
                 return response.json()
@@ -363,9 +436,15 @@ const run_single_task = (base: string, command: CommandConfiguration, task_id: s
             else
                 throw new Error('Error running single task.')
         })
+        .then((data) => {
+            console.log('data', data)
+            return data
+        })
         .then(TaskResult.parse)
-        .catch(() => {
-            return { status: 'error' }
+        .catch((e) => {
+            console.log('TaskResult')
+            console.log(e)
+            return { status: 'error', created: Date().toString() }
         })
 }
 
@@ -374,11 +453,11 @@ const annotator_metadata = <Opt>(am: AnnotatorMetadata): Displayable<Opt> => {
         return label('None')
     } else {
         return vl(
-            sl(label('Number of Steps:'), label(`${am['Number of steps']}`)),
-            sl(label('How long did this take?:'), label(am['How long did this take?'])),
-            sl(label('Number of tools:'), label(am['Number of tools'])),
-            sl(label('Steps:'), html(el('pre', {}, am.Steps))),
-            sl(label('Tools:'), html(el('pre', {}, am.Tools))),
+            sl(label('Number of Steps:'), label(`${am.number_of_steps}`)),
+            sl(label('How long did this take?:'), label(am.length_of_time)),
+            sl(label('Number of tools:'), label(am.number_of_tools)),
+            sl(label('Steps:'), html(el('pre', {}, am.steps))),
+            sl(label('Tools:'), html(el('pre', {}, am.tools))),
         )
     }
 }
@@ -407,13 +486,13 @@ const full_question = (qp: FullQuestion): Displayable<Options> => {
         })
         return vl(
             sl(label('Task ID:'), label(qp.task_id)),
-            sl(label('Level:'), label(`${qp.Level}`)),
+            sl(label('Level:'), label(`${qp.level}`)),
             sl(label('File name:'), label(qp.file_name === '' ? 'N/A' : qp.file_name)),
-            sl(label('Question:'), html(el('pre', {}, qp.Question))),
-            sl(label('Final answer:'), html(el('pre', {}, qp['Final answer']))),
+            sl(label('Question:'), html(el('pre', {}, qp.question))),
+            sl(label('Final answer:'), html(el('pre', {}, qp.final_answer))),
             vl(
                 label('Annotator Metadata:'),
-                sl(html(el('div', { style: 'width: 2em;' }, '\xa0')), annotator_metadata(qp['Annotator Metadata'])),
+                sl(html(el('div', { style: 'width: 2em;' }, '\xa0')), annotator_metadata(qp.annotator_metadata)),
             ),
             html(run),
             hideable(html(cancel_button), is_not_running),
@@ -445,7 +524,7 @@ const question_browser = (qps: QuestionPreview[]): Displayable<Options> => {
             selected_tasks.watch_remove((t) => task_selected_set.delete(t))
 
             const rows = reactive_list<QuestionPreview>([])
-            const t = table(rows, ['selected', "expand", 'task_id', 'Level', 'Question'], (r, row_el) => {
+            const t = table(rows, ['selected', 'expand', 'runs', 'task_id', 'Level', 'Question'], (r, row_el) => {
                 const selected = reactive(false)
                 row_selections.push([r, selected])
                 selected.watch((selected) => {
@@ -459,11 +538,19 @@ const question_browser = (qps: QuestionPreview[]): Displayable<Options> => {
                     }
                 })
                 selections.push(selected)
-                const qe = el('pre', { class: 'collapsed' }, r.Question)
+                const qe = el('pre', { class: 'collapsed' }, r.question)
                 const expand = button('expand', (e) => {
                     opts.get_single(r.task_id)
                         .then((full) => {
                             expanded.set(expanded.get()?.task_id === full.task_id ? undefined : full)
+                        })
+                        .catch((e) => console.trace(e))
+                    e.stopPropagation()
+                })
+                const runs = button('runs', (e) => {
+                    opts.get_task_runs(r.task_id)
+                        .then((runs) => {
+                            console.log(runs)
                         })
                     e.stopPropagation()
                 })
@@ -471,9 +558,10 @@ const question_browser = (qps: QuestionPreview[]): Displayable<Options> => {
                 return {
                     selected: { tag: 'dynamic', value: selected, display: checkbox(selected) },
                     expand: { tag: 'static', value: r.task_id, display: html(expand) },
+                    runs: { tag: 'static', value: r.task_id, display: html(runs) },
                     task_id: { tag: 'static', value: r.task_id, display: label(r.task_id) },
-                    Level: { tag: 'static', value: r.Level, display: label(`${r.Level}`) },
-                    Question: { tag: 'static', value: r.Question, display: html(qe) }
+                    Level: { tag: 'static', value: r.level, display: label(`${r.level}`) },
+                    Question: { tag: 'static', value: r.question, display: html(qe) }
                 }
             })
 
@@ -489,16 +577,21 @@ const question_browser = (qps: QuestionPreview[]): Displayable<Options> => {
                 selected_count.set(selected_tasks.length())
             })
 
+            const show_all_runs = button('show all runs', () => {
+                opts.get_all_runs()
+                    .then(() => {})
+            })
+
             const level_1 = button('select level 1', () => row_selections.forEach(([r, s]) => {
-                if (r.Level === 1)
+                if (r.level === 1)
                     s.set(true)
             }))
             const level_2 = button('select level 2', () => row_selections.forEach(([r, s]) => {
-                if (r.Level === 2)
+                if (r.level === 2)
                     s.set(true)
             }))
             const level_3 = button('select level 3', () => row_selections.forEach(([r, s]) => {
-                if (r.Level === 3)
+                if (r.level === 3)
                     s.set(true)
             }))
 
@@ -507,6 +600,7 @@ const question_browser = (qps: QuestionPreview[]): Displayable<Options> => {
                 sl(html(all), html(clear)),
                 sl(html(level_1), html(level_2), html(level_3)),
                 sl(html(run_selected), count_label),
+                html(show_all_runs)
             ).get_display(opts)
 
             const e = el('div', { style: 'overflow: auto; max-width: 100%; margin-top: 0.5em;' },
