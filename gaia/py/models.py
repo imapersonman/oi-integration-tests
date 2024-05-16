@@ -1,6 +1,6 @@
 from datetime import datetime
 from abc import ABC
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, TypedDict, Union
 import uuid
 from pydantic import BaseModel, Field
 
@@ -22,7 +22,10 @@ class AnnotatorMetadata(BaseModel):
 class FullTask(TaskPreview):
     final_answer: str
     file_name: str
-    annotator_metadata: AnnotatorMetadata
+    annotator_metadata: Optional[AnnotatorMetadata]
+
+    def to_preview(self) -> TaskPreview:
+        return self.model_copy()
 
 
 TaskResultStatus = Union[
@@ -116,7 +119,7 @@ class TaskRunRequest(BaseModel):
 
 
 class TaskRunPreview(BaseModel):
-    id: uuid.UUID
+    id: str
     task: TaskPreview
     started: datetime
     result: Optional[TaskResultStatus]
@@ -124,7 +127,7 @@ class TaskRunPreview(BaseModel):
 
 
 class TaskRun(BaseModel):
-    id: uuid.UUID = uuid.uuid4()
+    id: str = str(uuid.uuid4())
     started: datetime = datetime.now()
     task: FullTask
     command: CommandConfiguration
@@ -140,3 +143,33 @@ class TaskRun(BaseModel):
             result=status,
             finished=finished
         )
+
+
+class QueryAll(BaseModel):
+    tag: Literal["all"] = "all"
+
+
+class QueryWithTasks(BaseModel):
+    tag: Literal["tasks"] = "tasks"
+    ids: List[uuid.UUID]
+
+
+RunQuery = QueryAll | QueryWithTasks
+TaskQuery = QueryAll
+
+
+class TaskStarted(TypedDict):
+    tag: Literal["started"]
+    run_id: str
+
+
+class TaskFinished(TypedDict):
+    tag: Literal["finished"]
+    run_id: str
+    result: TaskResultStatus
+
+
+TaskUpdate = Union[
+    TaskStarted,
+    TaskFinished,
+]

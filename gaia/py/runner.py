@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import re
 from typing import List, cast
 import ds
@@ -16,12 +17,31 @@ def interpreter_from_command(cmd: CommandConfiguration) -> OpenInterpreter:
     return interpreter
 
 
-class TaskRunner:
+class TaskRunner(ABC):
+    @abstractmethod
+    def run(self, command: CommandConfiguration, task: FullTask) -> TaskResult:
+        ...
+
+
+class FakeTaskRunner(TaskRunner):
+    def __init__(self, results: List[TaskResult]):
+        self.current_index = 0
+        self.results = results
+    
+    def run(self, command: CommandConfiguration, task: FullTask) -> TaskResult:
+        if self.current_index >= len(self.results):
+            raise RuntimeError(f"Used up all {len(self.results)} results!")
+        return self.results[self.current_index]
+
+
+class DefaultTaskRunner(TaskRunner):
     def run(self, command: CommandConfiguration, task: FullTask) -> TaskResult:
         interpreter = interpreter_from_command(command)
 
         file_path = f"files/{task.file_name}"
-        prompt = f"file_path:{file_path}\n{task.question}"
+        prompt = task.question
+        if file_path != '':
+            prompt = f"file_path:{file_path}\n{prompt}"
 
         output = cast(List, interpreter.chat(prompt, display=True, stream=False))
         final_message = output[-1]["content"]

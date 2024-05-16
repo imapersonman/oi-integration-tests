@@ -1,0 +1,29 @@
+[
+    {
+        "id": "some-run-id",
+        "started": "at some point",
+        "task": {
+            "task_id": "some-task",
+            "question": "Why is this?",
+            "level": 1,
+            "final_answer": "because!",
+            "file_name": "",
+            "annotator_metadata": {
+                "steps": "",
+                "number_of_steps": 0,
+                "length_of_time": "this many",
+                "tools": "None",
+                "number_of_tools": "zero"
+            }
+        },
+        "command": {
+            "auto_run": true,
+            "os_mode": false,
+            "model": "a-big-one",
+            "api_base": "",
+            "api_key": "",
+            "system_prompt": "please be good at your job"
+        },
+        "conversation": []
+    }
+]

@@ -84,6 +84,8 @@ export interface rReactiveList<Element> extends Iterable<Element> {
 export interface wReactiveList<Element> {
   add: (...elements: Element[]) => void
   remove: (index: number) => void
+  remove_item: (item: Element) => void
+  clear: () => void
 }
 
 export interface rwReactiveList<Element> extends rReactiveList<Element>, wReactiveList<Element> {}
@@ -191,6 +193,17 @@ export const reactive_list = <Element>(initial: Element[]): rwpReactiveList<Elem
     return t_list
   }
 
+  const remove_item = (item: Element) => {
+    const index = index_of(item)
+    if (index !== -1)
+      remove(index)
+  }
+
+  const clear = () => {
+    for (let i = backing.length - 1; i >= 0; i--)
+      remove(i)
+  }
+
   return {
     move,
     watch_move,
@@ -216,6 +229,8 @@ export const reactive_list = <Element>(initial: Element[]): rwpReactiveList<Elem
     },
     add,
     remove,
+    remove_item,
+    clear,
     print: () => console.log('list', ...backing)
   }
 }
@@ -338,6 +353,10 @@ export class ReactiveMap<Map extends { [_: string]: unknown }> implements rReact
         for (const d of this.derived)
           d.notify_watchers()
       })
+  }
+
+  base(): Reactify<Map> {
+    return this.reactives
   }
 
   get(): Map {

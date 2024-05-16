@@ -1,0 +1,16 @@
+[
+    {
+        "task_id": "some-task",
+        "question": "Why is this?",
+        "level": 1,
+        "final_answer": "because!",
+        "file_name": "",
+        "annotator_metadata": {
+            "steps": "",
+            "number_of_steps": 0,
+            "length_of_time": "this many",
+            "tools": "None",
+            "number_of_tools": "zero"
+        }
+    }
+]

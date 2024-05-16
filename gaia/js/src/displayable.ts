@@ -220,9 +220,9 @@ export const tl = <T>(...children: (string | Displayable<T>)[]): Displayable<T> 
   }
 })
 
-export const reactive_text_field = <T>(id: rwReactive<string>): Displayable<T> => ({
+export const reactive_text_field = <T>(id: rwReactive<string>, placeholder: string = ''): Displayable<T> => ({
   get_display: () => {
-    const e = el('input', { type: 'text' }) as HTMLInputElement
+    const e = el('input', { type: 'text', placeholder }) as HTMLInputElement
     id.watch((id) => {
       e.value = id
     })()

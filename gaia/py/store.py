@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from contextlib import contextmanager
 import shelve
 import uuid
@@ -6,7 +7,31 @@ from typing import Any, Dict, List, Optional, TypedDict, cast
 from models import AnnotatorMetadata, CommandConfiguration, FullTask, TaskPreview, TaskResult, TaskRun, TaskRunPreview
 
 
-class TaskStore:
+class TaskStore(ABC):
+    @abstractmethod
+    def get_all(self) -> List[TaskPreview]:
+        ...
+    
+    @abstractmethod
+    def get_single(self, task_id: str) -> Optional[FullTask]:
+        ...
+
+
+class MemoryTaskStore(TaskStore):
+    def __init__(self, tasks: List[FullTask]):
+        self.tasks = tasks
+    
+    def get_all(self) -> List[TaskPreview]:
+        return [t.to_preview() for t in self.tasks]
+    
+    def get_single(self, task_id: str) -> Optional[FullTask]:
+        for t in self.tasks:
+            if t.task_id == task_id:
+                return t
+        return None
+
+
+class DefaultTaskStore(TaskStore):
     def __init__(self):
         self.validation = ds.all_of_the_validation_tests()
 
@@ -41,7 +66,8 @@ class TaskStore:
 
 
 class TaskRunStoreShelfSchema(TypedDict):
-    runs: Dict[uuid.UUID, TaskRun]
+    # The keys should be string versions of UUIDs.
+    runs: Dict[str, TaskRun]
 
 
 @contextmanager
@@ -51,7 +77,54 @@ def open_shelf(file_path: str, *args, **kwargs):
     shelf.close()
 
 
-class TaskRunStore:
+class TaskRunStore(ABC):
+    @abstractmethod
+    def start(self, task: FullTask, command: CommandConfiguration) -> TaskRun:
+        ...
+
+    @abstractmethod
+    def finish(self, run: TaskRun, result: TaskResult):
+        ...
+    
+    @abstractmethod
+    def get(self, id: str) -> TaskRun:
+        ...
+    
+    @abstractmethod
+    def get_previews(self) -> List[TaskRunPreview]:
+        ...
+    
+    @abstractmethod
+    def get_task_runs(self, task: FullTask) -> List[TaskRunPreview]:
+        ...
+
+
+class MemoryTaskRunStore(TaskRunStore):
+    def __init__(self, runs: List[TaskRun]):
+        self.runs = runs
+    
+    def start(self, task: FullTask, command: CommandConfiguration) -> TaskRun:
+        r = TaskRun(task=task, command=command, result=None)
+        self.runs.append(r)
+        return r
+
+    def finish(self, run: TaskRun, result: TaskResult):
+        ...
+    
+    def get(self, id: str) -> Optional[TaskRun]:
+        for tr in self.runs:
+            if tr.id == id:
+                return tr
+        return None
+    
+    def get_previews(self) -> List[TaskRunPreview]:
+        return [r.to_preview() for r in self.runs]
+    
+    def get_task_runs(self, task: FullTask) -> List[TaskRunPreview]:
+        return [r.to_preview() for r in self.runs if r.task.task_id == task.task_id]
+
+
+class DefaultTaskRunStore(TaskRunStore):
     def __init__(self, path: str):
         self.path = path
         self.__create_store_if_missing()
@@ -73,10 +146,10 @@ class TaskRunStore:
     
     def get(self, id: str) -> TaskRun:
         with open_shelf(self.path, "r") as store:
-            return store["runs"][uuid.UUID(id)]
+            return store["runs"][id]
     
     def get_previews(self) -> List[TaskRunPreview]:
-        with open_shelf(self.path, "r") as store:
+        with open_shelf(self.path, "c") as store:
             runs = store["runs"]
             previews = [f.to_preview() for f in runs.values()]
             return previews
