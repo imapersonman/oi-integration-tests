@@ -46,6 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("--tasks", type=str)
     parser.add_argument('--results', type=str)
     parser.add_argument("--runs", type=str)
+    parser.add_argument("--host", type=str)
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
 
@@ -54,5 +55,8 @@ if __name__ == "__main__":
     runs = make_task_runs_store(args.runs)
 
     app = Server(tasks, runner, runs).make_app()
-    uvicorn.run(app, port=args.port)
+    if args.host is not None:
+        uvicorn.run(app, port=args.port, host=args.host)
+    else:
+        uvicorn.run(app, port=args.port)
    
