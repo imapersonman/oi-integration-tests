@@ -62,10 +62,11 @@ class TR:
         )
     
     @staticmethod
-    def error(message: str) -> "ErrorTaskResult":
+    def error(message: str, conversation: List[Dict]) -> "ErrorTaskResult":
         return ErrorTaskResult(
             status="error",
-            message=message
+            message=message,
+            conversation=conversation
         )
 
 
@@ -94,6 +95,7 @@ class ErrorTaskResult(BaseModel):
     status: Literal["error"] = "error"
     created: datetime = datetime.now()
     message: str
+    conversation: List[Dict]
 
 
 TaskResult = Union[

@@ -1,8 +1,9 @@
-from abc import ABC, abstractmethod
 import re
+import traceback
+from abc import ABC, abstractmethod
 from typing import List, cast
-import ds
 from interpreter import OpenInterpreter
+
 from models import TR, CommandConfiguration, FullTask, TaskResult
 
 
@@ -49,7 +50,9 @@ class DefaultTaskRunner(TaskRunner):
             print("KeyboardInterrupt!")
             output = [{ "role": "error", "content": "KeyboardInterrupt" }]
         except Exception as e:
-            output = [{ "role": "error", "content": str(e) }]
+            trace = traceback.format_exc()
+            output = [{ "role": "error", "content": trace }]
+            return TR.error(str(e), output)
         finally:
             interpreter.computer.terminate()
 
