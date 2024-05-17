@@ -43,7 +43,11 @@ class DefaultTaskRunner(TaskRunner):
         if file_path != '':
             prompt = f"file_path:{file_path}\n{prompt}"
 
-        output = cast(List, interpreter.chat(prompt, display=True, stream=False))
+        try:
+            output = cast(List, interpreter.chat(prompt, display=True, stream=False))
+        except Exception as e:
+            output = [{ "role": "error", "content": e }]
+
         final_message = output[-1]["content"]
         final_answer_re = re.search("FINAL ANSWER: (.+)", final_message)
         if final_answer_re is None:
