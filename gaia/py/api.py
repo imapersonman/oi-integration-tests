@@ -8,8 +8,11 @@ from models import CommandConfiguration, FullTask, TaskPreview, TaskResult, Task
 
 # check_connection: (base: string, timeout_ms: number) => Promise<boolean>
 def check_connection(base: str, timeout_ms: int = 5000) -> bool:
-    response = requests.get(f"{base}/gaia/check-connection", timeout=timeout_ms / 1000)
-    return response.json() == "good"
+    try:
+        response = requests.get(f"{base}/gaia/check-connection", timeout=timeout_ms / 1000)
+        return response.json() == "good"
+    except:
+        return False
 
 # get_single: (base: string, task_id: string, abort_controller?: AbortController) => Promise<FullQuestion | undefined>
 def get_single(base: str, task_id: str) -> FullTask:
@@ -29,6 +32,7 @@ def run_single(base: str, command: CommandConfiguration, task_id: str) -> TaskRe
     }
     headers = { "Content-Type": "application/json" }
     response = requests.post(f"{base}/gaia/invoke-task", json=json, headers=headers)
+    print("JSON", response.text)
     return TypeAdapter(TaskResult).validate_python(response.json())
 
 # get_all_runs: (base: string, abort_controller?: AbortController) => Promise<TaskRunPreview[]>
