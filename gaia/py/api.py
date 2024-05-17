@@ -54,7 +54,7 @@ def invoke(base: str, command: CommandConfiguration, task_id: str) -> Optional[s
         "command": command.model_dump()
     }
     headers = { "Content-Type": "application/json" }
-    response = requests.post(f"{base}/invoke", json=json, headers=headers)
+    response = requests.post(f"{base}/gaia/invoke", json=json, headers=headers)
 
     if response.status_code == 404:
         return None

@@ -74,17 +74,6 @@ class Server:
                 raise HTTPException(status_code=404, detail="Task not found!")
             return self.tasks.get_single(task_id)
 
-        # @app.post("/gaia/invoke")
-        # def run_single(request: TaskRunRequest) -> TaskResult:
-        #     task = self.tasks.get_single(request.task_id)
-        #     if task is None:
-        #         raise HTTPException(status_code=404, detail="Task doesn't exist!")
-        #     else:
-        #         run = self.runs.start(task, request.command)
-        #         result = self.runner.run(request.command, task)
-        #         self.runs.finish(run, result)
-        #         return result
-
         @app.get("/gaia/runs")
         async def get_all_runs() -> List[TaskRunPreview]:
             print('getting all runs!')

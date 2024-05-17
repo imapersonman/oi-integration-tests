@@ -129,7 +129,7 @@ class TaskRunPreview(BaseModel):
 
 
 class TaskRun(BaseModel):
-    id: str = str(uuid.uuid4())
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     started: datetime = datetime.now()
     task: FullTask
     command: CommandConfiguration
