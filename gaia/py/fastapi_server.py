@@ -39,6 +39,14 @@ resp TaskResult
 """
 
 
+"""
+ideal:
+GET /runs
+GET /runs/{run_id}
+POST /invoke
+"""
+
+
 class Server:
     def __init__(self, tasks: TaskStore, runner: TaskRunner, runs: TaskRunStore):
         self.tasks = tasks
@@ -119,6 +127,7 @@ class Server:
         
         @app.post("/gaia/invoke")
         async def invoke(request: TaskRunRequest, bg_tasks: BackgroundTasks) -> str:
+            print("trying to invoke!")
             task = self.tasks.get_single(request.task_id)
             if task is None:
                 raise HTTPException(status_code=404, detail="Task doesn't exist!")

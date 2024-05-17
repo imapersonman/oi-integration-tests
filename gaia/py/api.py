@@ -1,8 +1,9 @@
 import requests
+import sseclient
 from typing import List, Optional
 from pydantic import TypeAdapter
 
-from models import CommandConfiguration, FullTask, TaskPreview, TaskResult, TaskRun, TaskRunPreview
+from models import CommandConfiguration, FullTask, TaskPreview, TaskResult, TaskRun, TaskRunPreview, TaskUpdate
 
 
 # check_connection: (base: string, timeout_ms: number) => Promise<boolean>
@@ -54,9 +55,17 @@ def invoke(base: str, command: CommandConfiguration, task_id: str) -> Optional[s
     }
     headers = { "Content-Type": "application/json" }
     response = requests.post(f"{base}/invoke", json=json, headers=headers)
-    
-    return response.text
+
+    if response.status_code == 404:
+        return None
+    return response.json()
 
 # invoke_all: (base: string, command: CommandConfiguration) => Promise<void>
 def invoke_all(base: str, command: CommandConfiguration):
     ...
+
+def check_runs(base: str):
+    messages = sseclient.SSEClient(f"{base}/gaia/check-runs")
+    for msg in messages:
+        # yield TypeAdapter[TaskUpdate].validate_
+        yield msg
