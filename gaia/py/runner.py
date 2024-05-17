@@ -49,7 +49,7 @@ class DefaultTaskRunner(TaskRunner):
             print("KeyboardInterrupt!")
             output = [{ "role": "error", "content": "KeyboardInterrupt" }]
         except Exception as e:
-            output = [{ "role": "error", "content": e }]
+            output = [{ "role": "error", "content": str(e) }]
         finally:
             interpreter.computer.terminate()
 
