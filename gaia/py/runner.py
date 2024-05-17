@@ -45,6 +45,9 @@ class DefaultTaskRunner(TaskRunner):
 
         try:
             output = cast(List, interpreter.chat(prompt, display=True, stream=False))
+        except KeyboardInterrupt:
+            print("KeyboardInterrupt!")
+            output = [{ "role": "error", "content": "KeyboardInterrupt" }]
         except Exception as e:
             output = [{ "role": "error", "content": e }]
         finally:

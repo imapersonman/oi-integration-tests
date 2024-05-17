@@ -24,14 +24,13 @@ def get_all(base: str) -> List[TaskPreview]:
     return TypeAdapter(List[TaskPreview]).validate_python(response.json())
 
 # run_single: (base: string, command: CommandConfiguration, task_id: string, abort_controller?: AbortController) => Promise<TaskResult>
-def run_single(base: str, command: CommandConfiguration, task_id: str) -> TaskResult:
+def run_single(base: str, command: CommandConfiguration, task_id: str, timeout_s: int = 30 * 60) -> TaskResult:
     json = {
         "command": command.model_dump(),
         "task_id": task_id
     }
     headers = { "Content-Type": "application/json" }
-    response = requests.post(f"{base}/gaia/invoke-task", json=json, headers=headers)
-    print("JSON", response.text)
+    response = requests.post(f"{base}/gaia/invoke-task", json=json, headers=headers, timeout=timeout_s)
     return TypeAdapter(TaskResult).validate_python(response.json())
 
 # get_all_runs: (base: string, abort_controller?: AbortController) => Promise<TaskRunPreview[]>
