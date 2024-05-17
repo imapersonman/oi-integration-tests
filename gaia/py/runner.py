@@ -47,6 +47,8 @@ class DefaultTaskRunner(TaskRunner):
             output = cast(List, interpreter.chat(prompt, display=True, stream=False))
         except Exception as e:
             output = [{ "role": "error", "content": e }]
+        finally:
+            interpreter.computer.terminate()
 
         final_message = output[-1]["content"]
         final_answer_re = re.search("FINAL ANSWER: (.+)", final_message)
