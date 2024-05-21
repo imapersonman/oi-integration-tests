@@ -94,7 +94,7 @@ def run_benchmark(benchmark: Benchmark, command: OpenInterpreterCommand) -> List
     for task in all_tasks:
         zstask = benchmark.task_to_id_prompt(task)
 
-        print(f"  Running task {zstask["id"]}...", end=" ")
+        print(f"  Running task {zstask['id']}...", end=" ")
         start, messages, end  = runner.run(command, zstask["prompt"])
 
         status = benchmark.task_result_status(task, messages)
