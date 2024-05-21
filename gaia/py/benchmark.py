@@ -1,15 +1,17 @@
-import csv
+import logging
+import traceback
 from dataclasses import dataclass
-import io
 from queue import Queue
 from threading import Thread
 from abc import ABC, abstractmethod
 from datetime import datetime
-import traceback
 from typing import Callable, Dict, Generic, List, Literal, NotRequired, Tuple, TypeVar, TypedDict, cast
+import uuid
 
 from interpreter import OpenInterpreter
 
+
+logger = logging.getLogger(__name__)
 
 Task = TypeVar("Task")
 LMC = Dict[str, str]
@@ -89,12 +91,12 @@ def run_benchmark(benchmark: Benchmark, command: OpenInterpreterCommand) -> List
     runner = DefaultBenchmarkRunner()
     results: List[TaskResult] = []
 
-    print(f"Running {len(all_tasks)} task(s)...")
+    logging.debug(f"Running {len(all_tasks)} task(s)...")
 
     for task in all_tasks:
         zstask = benchmark.task_to_id_prompt(task)
 
-        print(f"  Running task {zstask['id']}...", end=" ")
+        logging.debug(f"  Running task {zstask['id']}...")
         start, messages, end  = runner.run(command, zstask["prompt"])
 
         status = benchmark.task_result_status(task, messages)
@@ -111,7 +113,7 @@ def run_benchmark(benchmark: Benchmark, command: OpenInterpreterCommand) -> List
 
         results.append(result)
 
-    print("done!")
+    logging.debug("done!")
 
     return results
 
@@ -123,6 +125,7 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
     threads: List[Tuple[Queue, Thread]] = []
 
     def run_task(task_queue: Queue):
+        thread_id = uuid.uuid4()
         # THERE IS A RACE CONDITION -- check if empty, then get will NOT work.  Should be atomic op.
         # actually jk this isn't a problem because tasks are assigned before any threads are started,
         # and we aren't assigning anything after thread creation.
@@ -130,8 +133,10 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
         while not task_queue.empty():
             task = task_queue.get()
             zstask = benchmark.task_to_id_prompt(task)
+            logging.debug(f"thread {thread_id} running task {zstask['id']}")
             start, messages, end = runner.run(command, zstask["prompt"])
             status = benchmark.task_result_status(task, messages)
+            logging.debug(f"thread {thread_id} finished task {zstask['id']} with status {status}")
             results.put({
                 "task_id": zstask["id"],
                 "command": command,
@@ -142,15 +147,15 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
                 "status": status
             })
 
-    print(f"Setting up {n_threads} threads...", end=" ")
+    logging.debug(f"Setting up {n_threads} threads...")
 
     # setting up threads.
     for _ in range(0, n_threads):
         q = Queue()
         threads.append((q, Thread(target=run_task, args=(q,))))
     
-    print("done!")
-    print(f"Assigning {len(all_tasks)} tasks to {n_threads} threads...", end=" ")
+    logging.debug("done!")
+    logging.debug(f"Assigning {len(all_tasks)} tasks to {n_threads} threads...")
     
     # assigning tasks to threads in a round-robin manner.
     th_index = 0
@@ -159,21 +164,21 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
         q.put(task)
         th_index = (th_index + 1) % n_threads
     
-    print("done!")
-    print(f"Starting {n_threads} threads...")
+    logging.debug("done!")
+    logging.debug(f"Starting {n_threads} threads...")
     
     # starting threads.
     for q, th in threads:
         th.start()
-        print(f"  Started thread with {q.qsize()} tasks.")
+        logging.debug(f"  Started thread with {q.qsize()} tasks.")
     
-    print("done!")
-    print(f"Running {len(all_tasks)} tasks across {n_threads} threads...", end=" ")
+    logging.debug("done!")
+    logging.debug(f"Running {len(all_tasks)} tasks across {n_threads} threads...")
 
     # joining threads.
     for _, th in threads:
         th.join()
     
-    print("done!")
+    logging.debug("done!")
 
     return list(results.queue)
