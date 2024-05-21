@@ -150,7 +150,7 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
                 "status": status
             })
 
-    logger.debug(f"Setting up {n_threads} threads...")
+    logger.debug(f"Setting up {n_threads} thread(s)...")
 
     # setting up threads.
     for _ in range(0, n_threads):
@@ -168,7 +168,7 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
         th_index = (th_index + 1) % n_threads
     
     logger.debug("done!")
-    logger.debug(f"Starting {n_threads} threads...")
+    logger.debug(f"Starting {n_threads} thread(s)...")
     
     # starting threads.
     for q, th in threads:
@@ -176,7 +176,7 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
         logger.debug(f"  Started thread with {q.qsize()} tasks.")
     
     logger.debug("done!")
-    logger.debug(f"Running {len(all_tasks)} tasks across {n_threads} threads...")
+    logger.debug(f"Running {len(all_tasks)} tasks across {n_threads} thread(s)...")
 
     # joining threads.
     for _, th in threads:
