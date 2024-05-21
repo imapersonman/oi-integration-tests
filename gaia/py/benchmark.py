@@ -113,7 +113,6 @@ def run_benchmark(benchmark: Benchmark, command: OpenInterpreterCommand) -> List
             "status": status,
             "messages": messages,
         }
-        # print(f"  done: {result}")
 
         results.append(result)
 
@@ -137,10 +136,10 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
         while not task_queue.empty():
             task = task_queue.get()
             zstask = benchmark.task_to_id_prompt(task)
-            logger.debug(f"thread {thread_id} running task {zstask['id']}")
+            logger.debug(f"  task {zstask['id']} on thread {thread_id}: RUNNING...")
             start, messages, end = runner.run(command, zstask["prompt"])
             status = benchmark.task_result_status(task, messages)
-            logger.debug(f"thread {thread_id} finished task {zstask['id']} with status {status}")
+            logger.debug(f"  task {zstask['id']} on thread {thread_id}: DONE!")
             results.put({
                 "task_id": zstask["id"],
                 "command": command,
