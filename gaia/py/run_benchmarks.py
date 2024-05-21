@@ -121,6 +121,6 @@ def consume_results(results: List[TaskResult]):
 
 
 b = gaia_benchmark()
-# results = run_benchmark(b, commands["gpt4"])
-results = run_benchmark_threaded(b, commands["llama3"], 4)
+results = run_benchmark(b, commands["gpt4"])
+# results = run_benchmark_threaded(b, commands["llama3"], 4)
 consume_results(results)
