@@ -22,15 +22,15 @@ GAIATask = TypedDict("GAIATask", {
 
 def gaia_benchmark(first_n: Optional[int] = None) -> Benchmark[GAIATask]:
     def get_tasks() -> List[GAIATask]:
-        # ds = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
-        # as_list = cast(List[GAIATask], list(ds))
-        # if first_n is not None:
-        #     return as_list[:first_n]
-        # else:
-        #     return as_list
-        data = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
-        tfel = [d for d in data if "tfel" in d["Question"]]
-        return tfel
+        ds = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
+        as_list = cast(List[GAIATask], list(ds))
+        if first_n is not None:
+            return as_list[:first_n]
+        else:
+            return as_list
+        # data = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
+        # tfel = [d for d in data if "tfel" in d["Question"]]
+        # return tfel
     
     def task_to_id_prompt(task: GAIATask) -> ZeroShotTask:
         file_path = f"files/{task['file_name']}"
@@ -106,7 +106,7 @@ commands: Dict[str, OpenInterpreterCommand] = {
         "auto_run": True,
         "model": "ollama/llama3",
         "context_window": 2048,
-        "api_base": "http://127.0.0.1:11434",
+        "api_base": "http://192.168.1.86:11434",
         "custom_instructions": custom_instructions
     },
 }
@@ -121,7 +121,6 @@ def consume_results(results: List[TaskResult]):
             writer.writerows(results)
             with open("output.csv", "w") as csv_file:
                 v = f.getvalue()
-                print(v)
                 csv_file.write(v)
 
 
