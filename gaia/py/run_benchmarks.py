@@ -19,10 +19,14 @@ GAIATask = TypedDict("GAIATask", {
 })
 
 
-def gaia_benchmark(first_n: int) -> Benchmark[GAIATask]:
+def gaia_benchmark(first_n: Optional[int] = None) -> Benchmark[GAIATask]:
     def get_tasks() -> List[GAIATask]:
         ds = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
-        return cast(List[GAIATask], list(ds))[:first_n]
+        as_list = cast(List[GAIATask], list(ds))
+        if first_n is not None:
+            return as_list[:first_n]
+        else:
+            return as_list
         # data = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
         # tfel = [d for d in data if "tfel" in d["Question"]]
         # return tfel
@@ -116,7 +120,7 @@ def consume_results(results: List[TaskResult]):
         print(f.getvalue())
 
 
-b = gaia_benchmark(2)
+b = gaia_benchmark()
 # results = run_benchmark(b, commands["gpt4"])
-results = run_benchmark_threaded(b, commands["oai_default"])
+results = run_benchmark_threaded(b, commands["llama3"], 4)
 consume_results(results)
