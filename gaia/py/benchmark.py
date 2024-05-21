@@ -95,12 +95,12 @@ def run_benchmark(benchmark: Benchmark, command: OpenInterpreterCommand) -> List
     runner = DefaultBenchmarkRunner()
     results: List[TaskResult] = []
 
-    logging.debug(f"Running {len(all_tasks)} task(s)...")
+    logger.debug(f"Running {len(all_tasks)} task(s)...")
 
     for task in all_tasks:
         zstask = benchmark.task_to_id_prompt(task)
 
-        logging.debug(f"  Running task {zstask['id']}...")
+        logger.debug(f"  Running task {zstask['id']}...")
         start, messages, end  = runner.run(command, zstask["prompt"])
 
         status = benchmark.task_result_status(task, messages)
@@ -117,7 +117,7 @@ def run_benchmark(benchmark: Benchmark, command: OpenInterpreterCommand) -> List
 
         results.append(result)
 
-    logging.debug("done!")
+    logger.debug("done!")
 
     return results
 
@@ -137,10 +137,10 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
         while not task_queue.empty():
             task = task_queue.get()
             zstask = benchmark.task_to_id_prompt(task)
-            logging.debug(f"thread {thread_id} running task {zstask['id']}")
+            logger.debug(f"thread {thread_id} running task {zstask['id']}")
             start, messages, end = runner.run(command, zstask["prompt"])
             status = benchmark.task_result_status(task, messages)
-            logging.debug(f"thread {thread_id} finished task {zstask['id']} with status {status}")
+            logger.debug(f"thread {thread_id} finished task {zstask['id']} with status {status}")
             results.put({
                 "task_id": zstask["id"],
                 "command": command,
@@ -151,15 +151,15 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
                 "status": status
             })
 
-    logging.debug(f"Setting up {n_threads} threads...")
+    logger.debug(f"Setting up {n_threads} threads...")
 
     # setting up threads.
     for _ in range(0, n_threads):
         q = Queue()
         threads.append((q, Thread(target=run_task, args=(q,))))
     
-    logging.debug("done!")
-    logging.debug(f"Assigning {len(all_tasks)} tasks to {n_threads} threads...")
+    logger.debug("done!")
+    logger.debug(f"Assigning {len(all_tasks)} tasks to {n_threads} threads...")
     
     # assigning tasks to threads in a round-robin manner.
     th_index = 0
@@ -168,21 +168,21 @@ def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterC
         q.put(task)
         th_index = (th_index + 1) % n_threads
     
-    logging.debug("done!")
-    logging.debug(f"Starting {n_threads} threads...")
+    logger.debug("done!")
+    logger.debug(f"Starting {n_threads} threads...")
     
     # starting threads.
     for q, th in threads:
         th.start()
-        logging.debug(f"  Started thread with {q.qsize()} tasks.")
+        logger.debug(f"  Started thread with {q.qsize()} tasks.")
     
-    logging.debug("done!")
-    logging.debug(f"Running {len(all_tasks)} tasks across {n_threads} threads...")
+    logger.debug("done!")
+    logger.debug(f"Running {len(all_tasks)} tasks across {n_threads} threads...")
 
     # joining threads.
     for _, th in threads:
         th.join()
     
-    logging.debug("done!")
+    logger.debug("done!")
 
     return list(results.queue)

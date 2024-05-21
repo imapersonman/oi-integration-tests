@@ -1,3 +1,4 @@
+import logging
 import os
 import re
 import io
@@ -21,15 +22,15 @@ GAIATask = TypedDict("GAIATask", {
 
 def gaia_benchmark(first_n: Optional[int] = None) -> Benchmark[GAIATask]:
     def get_tasks() -> List[GAIATask]:
-        ds = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
-        as_list = cast(List[GAIATask], list(ds))
-        if first_n is not None:
-            return as_list[:first_n]
-        else:
-            return as_list
-        # data = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
-        # tfel = [d for d in data if "tfel" in d["Question"]]
-        # return tfel
+        # ds = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
+        # as_list = cast(List[GAIATask], list(ds))
+        # if first_n is not None:
+        #     return as_list[:first_n]
+        # else:
+        #     return as_list
+        data = load_dataset("gaia-benchmark/GAIA", "2023_all", split="validation")
+        tfel = [d for d in data if "tfel" in d["Question"]]
+        return tfel
     
     def task_to_id_prompt(task: GAIATask) -> ZeroShotTask:
         file_path = f"files/{task['file_name']}"
@@ -114,13 +115,17 @@ commands: Dict[str, OpenInterpreterCommand] = {
 def consume_results(results: List[TaskResult]):
     if len(results) > 0:
         f = io.StringIO("")
-        writer = csv.DictWriter(f, results[0].keys())
-        writer.writeheader()
-        writer.writerows(results)
-        print(f.getvalue())
+        with io.StringIO("") as f:
+            writer = csv.DictWriter(f, results[0].keys())
+            writer.writeheader()
+            writer.writerows(results)
+            with open("output.csv", "w") as csv_file:
+                v = f.getvalue()
+                print(v)
+                csv_file.write(v)
 
 
-b = gaia_benchmark()
-results = run_benchmark(b, commands["gpt4"])
-# results = run_benchmark_threaded(b, commands["llama3"], 4)
+b = gaia_benchmark(4)
+# results = run_benchmark(b, commands["gpt4"])
+results = run_benchmark_threaded(b, commands["llama3"], 4)
 consume_results(results)
