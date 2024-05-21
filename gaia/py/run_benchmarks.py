@@ -29,7 +29,7 @@ def gaia_benchmark(first_n: int) -> Benchmark[GAIATask]:
     
     def task_to_id_prompt(task: GAIATask) -> ZeroShotTask:
         file_path = f"files/{task['file_name']}"
-        prompt = task["Question"] if task["file_name"] == "" else f"file_path: {file_path}\n{task["Question"]}"
+        prompt = task["Question"] if task["file_name"] == "" else f"file_path: {file_path}\n{task['Question']}"
         return {"id": task["task_id"], "prompt": prompt}
     
     def task_result_status(task: GAIATask, messages: List[Dict[str, str]]) -> ResultStatus:
