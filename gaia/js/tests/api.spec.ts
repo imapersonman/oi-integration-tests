@@ -80,7 +80,7 @@ describe('api', () => {
     }
 
     describe('check_connection', () => {
-        test.only('that we\'re good', async () => {
+        test('that we\'re good', async () => {
             await run_test_server([], [], [], async () => {
                 const result = await api.check_connection(SERVER_BASE, 100)
                 expect(result).toEqual(true)

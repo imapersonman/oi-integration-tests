@@ -48,10 +48,10 @@ class DefaultTaskRunner(TaskRunner):
             output = cast(List, interpreter.chat(prompt, display=True, stream=False))
         except KeyboardInterrupt:
             print("KeyboardInterrupt!")
-            output = [{ "role": "error", "content": "KeyboardInterrupt" }]
+            output = [*interpreter.messages, { "role": "error", "content": "KeyboardInterrupt" }]
         except Exception as e:
             trace = traceback.format_exc()
-            output = [{ "role": "error", "content": trace }]
+            output = [*interpreter.messages, { "role": "error", "content": trace }]
             return TR.error(str(e), output)
         finally:
             interpreter.computer.terminate()
@@ -66,3 +66,4 @@ class DefaultTaskRunner(TaskRunner):
             return TR.correct(task.final_answer, output)
         else:
             return TR.incorrect(task.final_answer, final_answer, output)
+    

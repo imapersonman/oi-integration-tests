@@ -1,6 +1,6 @@
 from datetime import datetime
 from abc import ABC
-from typing import Dict, List, Literal, Optional, TypedDict, Union
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 import uuid
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,7 @@ class TaskPreview(BaseModel):
 
 class AnnotatorMetadata(BaseModel):
     steps: str
-    number_of_steps: int
+    number_of_steps: str
     length_of_time: str
     tools: str
     number_of_tools: str
@@ -23,6 +23,24 @@ class FullTask(TaskPreview):
     final_answer: str
     file_name: str
     annotator_metadata: Optional[AnnotatorMetadata]
+
+    @staticmethod
+    def from_gaia_task(e: Dict[str, Any]) -> "FullTask":
+        am = e["Annotator Metadata"]
+        return FullTask(
+            task_id=e["task_id"],
+            level=e["Level"],
+            question=e["Question"],
+            final_answer=e["Final answer"],
+            file_name=e["file_name"],
+            annotator_metadata=AnnotatorMetadata(
+                steps=am["Steps"],
+                number_of_steps=am["Number of steps"],
+                length_of_time=am["How long did this take?"],
+                tools=am["Tools"],
+                number_of_tools=am["Number of tools"]
+            )
+        )
 
     def to_preview(self) -> TaskPreview:
         return self.model_copy()

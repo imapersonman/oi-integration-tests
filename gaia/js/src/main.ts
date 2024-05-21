@@ -259,9 +259,16 @@ const full_task = <Opts>(task: FullQuestion): Displayable<Opts> => {
             sl(html(el('div', { style: 'width: 2em;' }, '\xa0')), annotator_metadata(task.annotator_metadata))))
 }
 
-const task_runner = <Opts>(t_id: string): Displayable<Opts> => {
+const task_runner = <Opts>(hn: rReactive<string>, t_id: string): Displayable<Opts> => {
     const [command, display] = command_configurator()
-    return vl(display, html(button('run!', () => {})))
+    const run_button = button('run!', () => {
+        run_button.disabled = true
+        API.run_single(hn.get(), command.get(), t_id)
+            .finally(() => {
+                run_button.disabled = false
+            })
+    })
+    return vl(display, html(run_button))
 }
 
 const command_configurator = <Opts>(): [rReactive<CommandConfiguration>, Displayable<Opts>] => {
@@ -290,7 +297,7 @@ const loading_full_task = <Opts>(hn: rReactive<string>, t_id: string): Displayab
         'resolved': (task) => {
             if (task === undefined)
                 return label('no task!')
-            return vl(full_task(task), html(button('run!', () => MODAL_DISPL.set(task_runner(t_id)))))
+            return vl(full_task(task), html(button('run!', () => MODAL_DISPL.set(task_runner(hn, t_id)))))
         }
     })
 }
