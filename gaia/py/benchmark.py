@@ -129,9 +129,9 @@ def run_benchmark_threaded_pool(benchmark: Benchmark[Task], command: OpenInterpr
 
     def run_task(task: Task) -> TaskResult:
         zstask = benchmark.task_to_id_prompt(task)
-        logging.debug(f"  task {zstask['id']}: RUNNING...")
+        logger.debug(f"  task {zstask['id']}: RUNNING...")
         start, messages, end = runner.run(command, zstask["prompt"])
-        logging.debug(f"  task {zstask['id']}: DONE!")
+        logger.debug(f"  task {zstask['id']}: DONE!")
         status = benchmark.task_result_status(task, messages)
         return {
             "task_id": zstask["id"],
