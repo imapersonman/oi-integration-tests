@@ -125,5 +125,5 @@ def consume_results(results: List[TaskResult]):
 
 b = gaia_benchmark(64)
 # results = run_benchmark(b, commands["gpt4"])
-results = run_benchmark_threaded_pool(b, commands["gpt35turbo"])
+results = run_benchmark_threaded_pool(b, commands["llama3"])
 consume_results(results)
