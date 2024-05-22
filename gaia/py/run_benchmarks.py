@@ -123,7 +123,7 @@ def consume_results(results: List[TaskResult]):
                 csv_file.write(v)
 
 
-b = gaia_benchmark(32)
+b = gaia_benchmark()
 # results = run_benchmark(b, commands["gpt4"])
-results = run_benchmark_threaded_pool(b, commands["llama3"])
+results = run_benchmark_threaded_pool(b, commands["gpt35turbo"])
 consume_results(results)
