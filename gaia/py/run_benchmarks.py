@@ -5,7 +5,7 @@ import csv
 from typing import TypedDict, Optional, Dict, cast, List
 from datasets import load_dataset
 
-from benchmark import Benchmark, OpenInterpreterCommand, ResultStatus, TaskResult, ZeroShotTask, run_benchmark, run_benchmark_threaded
+from benchmark import Benchmark, OpenInterpreterCommand, ResultStatus, TaskResult, ZeroShotTask, run_benchmark, run_benchmark_threaded, run_benchmark_threaded_pool
 
 
 GAIATask = TypedDict("GAIATask", {
@@ -123,7 +123,7 @@ def consume_results(results: List[TaskResult]):
                 csv_file.write(v)
 
 
-b = gaia_benchmark()
+b = gaia_benchmark(4)
 # results = run_benchmark(b, commands["gpt4"])
-results = run_benchmark_threaded(b, commands["llama3"], 4)
+results = run_benchmark_threaded_pool(b, commands["llama3"], 4)
 consume_results(results)

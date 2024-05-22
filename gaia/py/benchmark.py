@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import traceback
 from dataclasses import dataclass
@@ -119,6 +120,37 @@ def run_benchmark(benchmark: Benchmark, command: OpenInterpreterCommand) -> List
     logger.debug("done!")
 
     return results
+
+
+def run_benchmark_threaded_pool(benchmark: Benchmark[Task], command: OpenInterpreterCommand, n_threads: int = 2) -> List[TaskResult]:
+    all_tasks = benchmark.get_tasks()
+    runner = DefaultBenchmarkRunner()
+    task_results: List[TaskResult] = []
+
+    def run_task(task: Task) -> TaskResult:
+        zstask = benchmark.task_to_id_prompt(task)
+        logging.debug(f"  task {zstask['id']}: RUNNING...")
+        start, messages, end = runner.run(command, zstask["prompt"])
+        logging.debug(f"  task {zstask['id']}: DONE!")
+        status = benchmark.task_result_status(task, messages)
+        return {
+            "task_id": zstask["id"],
+            "command": command,
+            "prompt": zstask["prompt"],
+            "start": start,
+            "end": end,
+            "messages": messages,
+            "status": status
+        }
+
+    logger.debug(f"Running {len(all_tasks)} tasks across {n_threads} threads...")
+    with ThreadPoolExecutor(max_workers=n_threads) as pool:
+        results = pool.map(run_task, all_tasks)
+        for r in results:
+            task_results.append(r)
+    logger.debug(f"Done!")
+    
+    return task_results
 
 
 def run_benchmark_threaded(benchmark: Benchmark[Task], command: OpenInterpreterCommand, n_threads: int = 2) -> List[TaskResult]:
