@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Callable, Dict, Generic, List, Literal, NotRequired, Tuple, TypeVar, TypedDict, cast
 import uuid
+from git import Optional
 
 from interpreter import OpenInterpreter
 
@@ -122,7 +123,7 @@ def run_benchmark(benchmark: Benchmark, command: OpenInterpreterCommand) -> List
     return results
 
 
-def run_benchmark_threaded_pool(benchmark: Benchmark[Task], command: OpenInterpreterCommand, n_threads: int = 2) -> List[TaskResult]:
+def run_benchmark_threaded_pool(benchmark: Benchmark[Task], command: OpenInterpreterCommand, n_threads: Optional[int] = None) -> List[TaskResult]:
     all_tasks = benchmark.get_tasks()
     runner = DefaultBenchmarkRunner()
     task_results: List[TaskResult] = []
@@ -143,12 +144,13 @@ def run_benchmark_threaded_pool(benchmark: Benchmark[Task], command: OpenInterpr
             "status": status
         }
 
-    logger.debug(f"Running {len(all_tasks)} tasks across {n_threads} threads...")
     with ThreadPoolExecutor(max_workers=n_threads) as pool:
+        logger.debug(f"Running {len(all_tasks)} tasks across {pool._max_workers} threads...")
+        pool._max_workers
         results = pool.map(run_task, all_tasks)
         for r in results:
             task_results.append(r)
-    logger.debug(f"Done!")
+        logger.debug(f"Done!")
     
     return task_results
 
