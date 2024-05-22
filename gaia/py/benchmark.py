@@ -131,18 +131,27 @@ def run_benchmark_threaded_pool(benchmark: Benchmark[Task], command: OpenInterpr
     def run_task(task: Task) -> TaskResult:
         zstask = benchmark.task_to_id_prompt(task)
         logger.debug(f"  task {zstask['id']}: RUNNING...")
-        start, messages, end = runner.run(command, zstask["prompt"])
-        logger.debug(f"  task {zstask['id']}: DONE!")
-        status = benchmark.task_result_status(task, messages)
-        return {
-            "task_id": zstask["id"],
-            "command": command,
-            "prompt": zstask["prompt"],
-            "start": start,
-            "end": end,
-            "messages": messages,
-            "status": status
-        }
+        try:
+            start, messages, end = runner.run(command, zstask["prompt"])
+            status = benchmark.task_result_status(task, messages)
+        except Exception as e:
+            logger.debug(f"  task {zstask['id']}: EXCEPTION!")
+            logger.debug(e)
+            status = "error"
+        finally:
+            logger.debug(f"  task {zstask['id']}: DONE!")
+            # the face that start, messages, and end are visible in this block
+            # is very strange and likely unsound.
+            # Python was a mistake.
+            return {
+                "task_id": zstask["id"],
+                "command": command,
+                "prompt": zstask["prompt"],
+                "start": start,
+                "end": end,
+                "messages": messages,
+                "status": status
+            }
 
     with ThreadPoolExecutor(max_workers=n_threads) as pool:
         logger.debug(f"Running {len(all_tasks)} tasks across {pool._max_workers} threads...")
