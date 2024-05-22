@@ -79,7 +79,7 @@ class DefaultBenchmarkRunner(BenchmarkRunner):
         start = datetime.now()
 
         try:
-            output = cast(List, interpreter.chat(prompt, display=True, stream=False))
+            output = cast(List, interpreter.chat(prompt, display=False, stream=False))
         except KeyboardInterrupt:
             output = [*interpreter.messages, { "role": "error", "content": "KeyboardInterrupt" }]
         except Exception as e:
